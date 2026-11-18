@@ -1,29 +1,27 @@
 /**
- * YAI Studio — GitHub REST API client (server-only)
+ * YAI Studio — GitHub Contents API Client
  *
- * Thin wrapper over the GitHub Contents API (api.github.com). All content is
- * Base64-encoded/decoded here; callers work with plain UTF-8 strings. Never
- * log or expose the token passed to any function.
+ * Provides typed, least-privilege operations on user repositories via the
+ * GitHub REST API.
  *
- * Error hierarchy:
- *   GitHubApiError       — base, carries status + message
- *   ├── NotFoundError    — HTTP 404
- *   ├── ConflictError    — HTTP 409 (SHA mismatch)
- *   ├── ValidationError  — HTTP 422
- *   └── RateLimitError   — HTTP 403 / 429 (rate-limited)
- *
- * @module lib/github/api-client
+ * Rules:
+ * - Uses the fine-grained / repository-scoped GitHub token stored server-side.
+ * - All update and delete operations MUST retrieve and supply the current SHA.
+ * - Handles 404 (NotFound), 409 (Conflict), 422 (Unprocessable) cleanly.
+ * - No silent fallbacks to alternative repositories or local storage.
+ * - Zero tokens exposed to client bundles.
  */
 import 'server-only';
 
 // ---------------------------------------------------------------------------
-// Error types
+// Error Hierarchy
 // ---------------------------------------------------------------------------
 
 export class GitHubApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    public readonly responseBody?: unknown,
   ) {
     super(message);
     this.name = 'GitHubApiError';
@@ -31,59 +29,61 @@ export class GitHubApiError extends Error {
 }
 
 export class NotFoundError extends GitHubApiError {
-  constructor(message = 'Resource not found') {
+  constructor(message = 'Resource not found in GitHub repository') {
     super(message, 404);
     this.name = 'NotFoundError';
   }
 }
 
 export class ConflictError extends GitHubApiError {
-  constructor(message = 'SHA conflict — file was modified since last read') {
+  constructor(
+    message = 'SHA mismatch or concurrent modification conflict in GitHub repository',
+  ) {
     super(message, 409);
     this.name = 'ConflictError';
   }
 }
 
 export class ValidationError extends GitHubApiError {
-  constructor(message = 'GitHub API validation error') {
+  constructor(message = 'GitHub API validation failed (422)') {
     super(message, 422);
     this.name = 'ValidationError';
   }
 }
 
 export class RateLimitError extends GitHubApiError {
-  constructor(
-    message = 'GitHub API rate limit exceeded',
-    public readonly retryAfter?: number,
-  ) {
-    super(message, 429);
+  constructor(message = 'GitHub API rate limit exceeded', public readonly retryAfter?: number) {
+    super(message, 403);
     this.name = 'RateLimitError';
   }
 }
 
 // ---------------------------------------------------------------------------
-// Response shapes (internal)
+// Types
 // ---------------------------------------------------------------------------
 
 export interface GitHubFile {
-  /** Repository-relative path */
   path: string;
-  /** Decoded UTF-8 content (not Base64) */
-  content: string;
-  /** Current file SHA — required for updates and deletes */
+  content: string; // Decoded UTF-8 text
   sha: string;
   size: number;
 }
 
-export interface GitHubTreeItem {
+export interface GitHubDirectoryItem {
+  name: string;
   path: string;
-  type: 'blob' | 'tree';
   sha: string;
-  size?: number;
+  size: number;
+  type: 'file' | 'dir' | 'submodule' | 'symlink';
+}
+
+export interface CommitResult {
+  sha: string;
+  path: string;
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Internal helpers
 // ---------------------------------------------------------------------------
 
 const API_BASE = 'https://api.github.com';
@@ -93,6 +93,7 @@ function authHeaders(token: string): HeadersInit {
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'YAI-Studio/0.1.0',
     'Content-Type': 'application/json',
   };
 }
@@ -207,8 +208,8 @@ export async function createFile(
 }
 
 /**
- * Update an existing file. The sha must match the current HEAD sha of the
- * file; mismatches throw ConflictError.
+ * Update an existing file. Requires the current SHA to prevent overwriting
+ * concurrent edits. Throws ConflictError (409) if the SHA is stale.
  */
 export async function updateFile(
   owner: string,
@@ -236,7 +237,7 @@ export async function updateFile(
 }
 
 /**
- * Delete a file. The sha must match the current HEAD sha.
+ * Delete a file. Requires the current SHA.
  */
 export async function deleteFile(
   owner: string,
@@ -250,23 +251,25 @@ export async function deleteFile(
   const response = await fetch(url, {
     method: 'DELETE',
     headers: authHeaders(token),
-    body: JSON.stringify({ message, sha }),
+    body: JSON.stringify({
+      message,
+      sha,
+    }),
   });
 
   await throwIfError(response);
 }
 
 /**
- * List the immediate contents of a directory. Returns an empty array when the
- * directory does not exist (404). Blobs (files) and trees (directories) are
- * both included.
+ * List contents of a directory. Returns an empty array if the directory
+ * does not exist (404), rather than throwing.
  */
 export async function listDirectory(
   owner: string,
   repo: string,
   path: string,
   token: string,
-): Promise<GitHubTreeItem[]> {
+): Promise<GitHubDirectoryItem[]> {
   const url = `${API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}`;
   const response = await fetch(url, {
     headers: authHeaders(token),
@@ -277,23 +280,58 @@ export async function listDirectory(
   await throwIfError(response);
 
   const data = (await response.json()) as Array<{
+    name: string;
     path: string;
-    type: string;
     sha: string;
-    size?: number;
+    size: number;
+    type: string;
   }>;
 
   if (!Array.isArray(data)) {
-    // Single file returned — path was a file, not a directory
-    throw new GitHubApiError(`Path '${path}' is a file, not a directory`, 400);
+    // If the path was a file, GitHub returns an object not an array
+    throw new GitHubApiError(`Expected a directory at '${path}', got an object`, 400);
   }
 
   return data.map((item) => ({
+    name: item.name,
     path: item.path,
-    type: item.type === 'dir' ? 'tree' : 'blob',
     sha: item.sha,
     size: item.size,
+    type: item.type as GitHubDirectoryItem['type'],
   }));
+}
+
+/**
+ * Convenience helper: write a file creating it if absent, updating if present.
+ * Performs a GET first to obtain the SHA when updating.
+ * Retries once on 409 Conflict.
+ */
+export async function putFile(
+  owner: string,
+  repo: string,
+  path: string,
+  content: string,
+  message: string,
+  token: string,
+): Promise<{ sha: string }> {
+  const existing = await getFile(owner, repo, path, token);
+  if (existing) {
+    try {
+      return await updateFile(owner, repo, path, content, existing.sha, message, token);
+    } catch (err) {
+      if (err instanceof ConflictError) {
+        // Stale SHA: re-fetch once and retry
+        const fresh = await getFile(owner, repo, path, token);
+        if (!fresh) {
+          return await createFile(owner, repo, path, content, message, token);
+        }
+        return await updateFile(owner, repo, path, content, fresh.sha, message, token);
+      }
+      throw err;
+    }
+  } else {
+    return await createFile(owner, repo, path, content, message, token);
+  }
 }
 
 /**
