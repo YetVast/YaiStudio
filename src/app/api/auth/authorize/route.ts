@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
 
-    const authorizeUrl = await buildAuthorizationUrl(state, codeChallenge, 'S256');
+    const authorizeUrl = await buildAuthorizationUrl(state, codeChallenge, 'S256', request);
 
     const response = NextResponse.redirect(authorizeUrl);
 

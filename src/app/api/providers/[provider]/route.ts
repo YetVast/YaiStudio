@@ -48,14 +48,20 @@ export async function POST(
       );
     }
 
-    // Store encrypted in server-only key store
-    await storeProviderKey(session.yvUserId, provider, rawKey.trim());
-    const status = await getProviderKeyStatus(session.yvUserId, provider);
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      provider: status,
+      provider: {
+        provider,
+        configured: true,
+        maskedKey: rawKey.trim().length <= 10 ? '********' : `${rawKey.trim().slice(0, 6)}...${rawKey.trim().slice(-4)}`,
+        storedAt: new Date().toISOString(),
+      },
     });
+
+    // Store encrypted in server-only persistent vault & attach to response cookie
+    await storeProviderKey(session.yvUserId, provider, rawKey.trim(), response);
+
+    return response;
   } catch (error) {
     console.error(`[Provider Key Store ${provider}] Error:`, error);
     return NextResponse.json(
@@ -82,8 +88,9 @@ export async function DELETE(
   }
 
   try {
-    await deleteProviderKey(session.yvUserId, provider);
-    return NextResponse.json({ success: true, provider, configured: false });
+    const response = NextResponse.json({ success: true, provider, configured: false });
+    await deleteProviderKey(session.yvUserId, provider, response);
+    return response;
   } catch (error) {
     console.error(`[Provider Key Delete ${provider}] Error:`, error);
     return NextResponse.json(

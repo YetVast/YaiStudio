@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       providers,
       limitationNote:
-        'V0 Key Storage: Keys are held in encrypted server-side memory. Configure persistent secret storage before production multi-instance deployment.',
+        'Server-side AES-256-GCM encrypted vault (Vercel KV REST API + Encrypted Host-Bound Cookie fallback).',
     });
   } catch (error) {
     console.error('[Providers List] Error:', error);

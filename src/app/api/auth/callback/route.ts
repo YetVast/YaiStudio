@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { exchangeCode, verifyAssertion } from '@/lib/auth/yetvast-auth';
 import { createSession } from '@/lib/auth/session';
+import { getAppBaseUrl } from '@/lib/auth/url-utils';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -24,9 +25,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const callbackUri = `${process.env.NEXT_PUBLIC_YAI_ORIGIN || 'http://localhost:3000'}/api/auth/callback`;
-    const { assertion } = await exchangeCode(code, codeVerifier, callbackUri);
-    const verified = await verifyAssertion(assertion);
+    const callbackUri = `${getAppBaseUrl(request)}/api/auth/callback`;
+    const { assertion } = await exchangeCode(code, codeVerifier, callbackUri, request);
+    const verified = await verifyAssertion(assertion, request);
 
     const redirectTarget = verified.githubLogin ? '/' : '/github-connect';
     const response = NextResponse.redirect(new URL(redirectTarget, request.url));

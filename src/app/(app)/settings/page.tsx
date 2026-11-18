@@ -278,9 +278,9 @@ export default function SettingsPage() {
             <Key size={20} />
             <div>
               <strong>Secure Key Handling</strong>
-              Provider keys are held encrypted in ephemeral server memory during your active
-              session. Keys are never committed to your data repository and never sent to client
-              bundles.
+              Provider keys are held encrypted with AES-256-GCM in your server-side vault (Vercel
+              KV / encrypted session vault). Keys are never committed to your data repository and
+              never sent to client bundles.
             </div>
           </div>
 

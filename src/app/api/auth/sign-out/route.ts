@@ -18,5 +18,6 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({ success: true });
   destroySession(response);
+  response.cookies.delete('yai_vault');
   return response;
 }

@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const token = await exchangeGitHubCode(code);
+    const token = await exchangeGitHubCode(code, request);
     const user = await getGitHubUser(token);
-
-    // Store token securely encrypted server-side bound to user's identity
-    await storeGitHubToken(session.yvUserId, token);
 
     const response = NextResponse.redirect(new URL('/repo-setup', request.url));
     response.cookies.delete('yai_gh_oauth_state');
+
+    // Store token securely encrypted server-side bound to user's identity & attach to cookie
+    await storeGitHubToken(session.yvUserId, token, response);
 
     // Update session with connected GitHub login
     await createSession(

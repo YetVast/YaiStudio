@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const state = generateState();
-    const authUrl = buildGitHubAuthUrl(state);
+    const authUrl = buildGitHubAuthUrl(state, request);
 
     const response = NextResponse.redirect(authUrl);
     response.cookies.set('yai_gh_oauth_state', state, {
