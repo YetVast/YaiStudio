@@ -1,0 +1,165 @@
+.container {
+  padding: var(--space-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  max-width: 760px;
+}
+
+.noticeBox {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-8);
+}
+
+.noticeIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.noticeBox strong {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  margin-bottom: 2px;
+}
+
+.noticeBox p {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-5);
+}
+
+.productCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.productIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.productIcon {
+  color: var(--color-primary);
+}
+
+.productIdentity h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-foreground);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.activePill {
+  background-color: var(--color-muted);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.availablePill {
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border: 1px solid var(--color-border);
+}
+
+.productDesc {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+  margin: 0 0 var(--space-4) 0;
+}
+
+.scopeSection {
+  background-color: var(--color-muted);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  flex: 1;
+}
+
+.scopeSection strong {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-foreground);
+  margin-bottom: 2px;
+}
+
+.scopeSection p {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.6875rem;
+}
+
+.protocolBadge {
+  font-family: var(--font-mono);
+  color: var(--color-primary);
+  background-color: var(--color-muted);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.authBadge {
+  color: var(--color-muted-foreground);
+}

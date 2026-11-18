@@ -1,0 +1,407 @@
+.container {
+  padding: var(--space-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  max-width: 760px;
+}
+
+.warningBox {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--color-muted);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-6);
+}
+
+.warningIcon {
+  color: var(--color-warning);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.warningBox strong {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  margin-bottom: 2px;
+}
+
+.warningBox p {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-muted);
+  border-left: 3px solid var(--color-destructive);
+  color: var(--color-destructive);
+  font-size: 0.8125rem;
+  margin-bottom: var(--space-6);
+  border-radius: var(--radius-sm);
+}
+
+.successBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-muted);
+  border-left: 3px solid var(--color-success);
+  color: var(--color-success);
+  font-size: 0.8125rem;
+  margin-bottom: var(--space-6);
+  border-radius: var(--radius-sm);
+}
+
+.loadingBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  gap: var(--space-3);
+  color: var(--color-muted-foreground);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--color-primary);
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.providerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .providerGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.providerCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+}
+
+.providerIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.providerIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.providerTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.providerTitleRow h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-foreground);
+}
+
+.primaryBadge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border-radius: var(--radius-sm);
+}
+
+.optionalBadge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border-radius: var(--radius-sm);
+}
+
+.providerType {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.statusPill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.statusConfigured {
+  background-color: var(--color-muted);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.statusUnconfigured {
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border: 1px solid var(--color-border);
+}
+
+.providerDesc {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+  margin: 0 0 var(--space-5) 0;
+}
+
+.keyDetails {
+  background-color: var(--color-muted);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+  flex: 1;
+}
+
+.configuredKeyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.keyLabel {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.maskedKey {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-foreground);
+}
+
+.keyBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.smallActionBtn {
+  padding: 4px 10px;
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid var(--color-destructive);
+  color: var(--color-destructive);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.deleteBtn:hover {
+  background-color: var(--color-destructive);
+  color: var(--color-destructive-foreground);
+}
+
+.unconfiguredBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+}
+
+.unconfiguredBox p {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.addKeyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.extLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.extLink:hover {
+  text-decoration: underline;
+}
+
+/* ─── Modal ───────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.modalCard h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-1) 0;
+  color: var(--color-foreground);
+}
+
+.modalCard p {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0 0 var(--space-4) 0;
+  line-height: 1.4;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.keyInput {
+  width: 100%;
+  padding: var(--space-3) 40px var(--space-3) var(--space-3);
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+.keyInput:focus {
+  outline: none;
+  border-color: var(--color-ring);
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.modalCancelBtn {
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-foreground);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.modalSubmitBtn {
+  padding: 6px 14px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -1,0 +1,434 @@
+.container {
+  padding: var(--space-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-muted);
+  border-left: 3px solid var(--color-destructive);
+  color: var(--color-destructive);
+  font-size: 0.8125rem;
+  margin-bottom: var(--space-6);
+  border-radius: var(--radius-sm);
+}
+
+.tabNav {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-6);
+  overflow-x: auto;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-muted-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.tabBtn:hover {
+  color: var(--color-foreground);
+}
+
+.activeTabBtn {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.candidatesTabBtn {
+  margin-left: auto;
+}
+
+.counterBadge {
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.loadingBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  gap: var(--space-3);
+  color: var(--color-muted-foreground);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--color-primary);
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.categoryDesc {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-4);
+  font-style: italic;
+}
+
+.recordGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.recordCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+
+.recordContent {
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3) 0;
+  flex: 1;
+}
+
+.recordFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.6875rem;
+}
+
+.provenancePill {
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.dateLabel {
+  color: var(--color-muted-foreground);
+}
+
+.emptyBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+  background-color: var(--color-muted);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: var(--color-muted-foreground);
+}
+
+.emptyIcon {
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-2);
+}
+
+.emptyBox h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.emptyBox p {
+  font-size: 0.8125rem;
+  margin: 0 0 var(--space-4) 0;
+  max-width: 340px;
+}
+
+.smallActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px 12px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+/* ─── Candidates View ─────────────────────────────────── */
+.candidatesNotice {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+}
+
+.noticeIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.candidatesNotice strong {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  margin-bottom: 2px;
+}
+
+.candidatesNotice p {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.candidateList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.candidateCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.candidateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.categoryPill {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background-color: var(--color-muted);
+  color: var(--color-primary);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.candidateText {
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.candidateFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.statusBadge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.statusPending {
+  background-color: var(--color-muted);
+  color: var(--color-warning);
+}
+
+.statusApproved {
+  background-color: var(--color-muted);
+  color: var(--color-success);
+}
+
+.statusRejected {
+  background-color: var(--color-muted);
+  color: var(--color-destructive);
+}
+
+.reviewActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.rejectBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid var(--color-destructive);
+  color: var(--color-destructive);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.approveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 10px;
+  background-color: var(--color-success);
+  color: var(--color-success-foreground);
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* ─── Modal ───────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.modalCard h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-1) 0;
+  color: var(--color-foreground);
+}
+
+.modalCard p {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.modalTextarea, .modalInput {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-size: 0.875rem;
+  margin-bottom: var(--space-3);
+  resize: vertical;
+}
+
+.modalTextarea:focus, .modalInput:focus {
+  outline: none;
+  border-color: var(--color-ring);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.modalCancelBtn {
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-foreground);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.modalSubmitBtn {
+  padding: 6px 14px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
