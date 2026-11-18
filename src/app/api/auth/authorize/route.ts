@@ -1,19 +1,25 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/lib/auth/pkce';
-import { buildAuthorizationUrl } from '@/lib/auth/yetvast-auth';
+import { getYetVastAuthClient } from '@/lib/auth/yetvast-auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const state = generateState();
-    const codeVerifier = generateCodeVerifier();
-    const codeChallenge = generateCodeChallenge(codeVerifier);
+    const { searchParams } = new URL(request.url);
+    const provider =
+      searchParams.get('provider') ||
+      searchParams.get('identity_provider') ||
+      undefined;
 
-    const authorizeUrl = await buildAuthorizationUrl(state, codeChallenge, 'S256', request);
+    const client = getYetVastAuthClient(request);
+    const auth = await client.createAuthorizeRedirect({
+      ...(provider ? { provider } : {}),
+    });
 
-    const response = NextResponse.redirect(authorizeUrl);
+    const response = NextResponse.redirect(auth.authorizeUrl);
 
     // Short-lived cookie storing state & verifier for callback verification
-    response.cookies.set('yai_oauth_state', state, {
+    response.cookies.set('yai_oauth_state', auth.state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -21,7 +27,7 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
-    response.cookies.set('yai_oauth_verifier', codeVerifier, {
+    response.cookies.set('yai_oauth_verifier', auth.codeVerifier, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

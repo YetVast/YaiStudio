@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { exchangeCode, verifyAssertion } from '@/lib/auth/yetvast-auth';
+import { getYetVastAuthClient } from '@/lib/auth/yetvast-auth';
 import { createSession } from '@/lib/auth/session';
-import { getAppBaseUrl } from '@/lib/auth/url-utils';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -25,11 +26,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const callbackUri = `${getAppBaseUrl(request)}/api/auth/callback`;
-    const { assertion } = await exchangeCode(code, codeVerifier, callbackUri, request);
-    const verified = await verifyAssertion(assertion, request);
+    const client = getYetVastAuthClient(request);
+    const { assertion } = await client.exchangeCallback({
+      code,
+      codeVerifier,
+    });
 
-    const redirectTarget = verified.githubLogin ? '/' : '/github-connect';
+    const yvUserId = (assertion.yvUserId || assertion.sub) as string;
+    const githubLogin =
+      assertion.provider === 'github'
+        ? (assertion.displayName || assertion.providerSubjectId)
+        : undefined;
+
+    const redirectTarget = githubLogin ? '/' : '/github-connect';
     const response = NextResponse.redirect(new URL(redirectTarget, request.url));
 
     // Clear OAuth state cookies
@@ -39,9 +48,9 @@ export async function GET(request: NextRequest) {
     // Create host-bound HTTP-only YAI session
     await createSession(
       {
-        yvUserId: verified.yvUserId,
-        githubLogin: verified.githubLogin,
-        githubConnected: Boolean(verified.githubLogin),
+        yvUserId,
+        githubLogin,
+        githubConnected: Boolean(githubLogin),
         repoVerified: false,
       },
       response,
