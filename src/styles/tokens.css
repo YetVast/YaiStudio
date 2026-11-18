@@ -1,0 +1,110 @@
+/* YVS Design System — Semantic Tokens
+   Light tokens are the default; dark tokens are applied via
+   [data-theme="dark"] attribute (set by ThemeProvider before hydration)
+   and also via prefers-color-scheme as a fallback. */
+
+/* ─── Typography ─────────────────────────────────────────────── */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+
+  /* ─── Spacing scale ──────────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ─── Border radius ──────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+
+  /* ─── Shadows ─────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+
+  /* ─── Light theme (default) ───────────────────────────────────── */
+  --color-background:          #FFFFFF;
+  --color-foreground:          #17121C;
+  --color-card:                #FFFFFF;
+  --color-card-foreground:     #17121C;
+  --color-muted:               #F4F1F6;
+  --color-muted-foreground:    #655C6B;
+  --color-border:              #DDD6E2;
+  --color-input:               #DDD6E2;
+  --color-primary:             #4B0084;
+  --color-primary-foreground:  #FFFFFF;
+  --color-secondary:           #F1EDF4;
+  --color-secondary-foreground:#4B0084;
+  --color-accent:              #FFFF11;
+  --color-accent-foreground:   #160020;
+  --color-destructive:         #C62828;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success:             #16803C;
+  --color-success-foreground:  #FFFFFF;
+  --color-warning:             #A15C00;
+  --color-warning-foreground:  #FFFFFF;
+  --color-ring:                #4B0084;
+  --color-brand-border:        #4B0084;
+}
+
+/* ─── Dark theme (explicit attribute) ─────────────────────────── */
+[data-theme='dark'] {
+  --color-background:          #09060D;
+  --color-foreground:          #F8F5FA;
+  --color-card:                #100B16;
+  --color-card-foreground:     #F8F5FA;
+  --color-muted:               #17121F;
+  --color-muted-foreground:    #B9AFBF;
+  --color-border:              #3A2450;
+  --color-input:               #3A2450;
+  --color-primary:             #FFFF11;
+  --color-primary-foreground:  #160020;
+  --color-secondary:           #21152A;
+  --color-secondary-foreground:#F8F5FA;
+  --color-accent:              #FFFF11;
+  --color-accent-foreground:   #160020;
+  --color-destructive:         #FF6B6B;
+  --color-destructive-foreground: #240006;
+  --color-success:             #55D98A;
+  --color-success-foreground:  #06180D;
+  --color-warning:             #FFC44D;
+  --color-warning-foreground:  #241400;
+  --color-ring:                #FFFF11;
+  --color-brand-border:        #4B0084;
+}
+
+/* ─── System preference fallback (no JS / no [data-theme]) ──────── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-background:          #09060D;
+    --color-foreground:          #F8F5FA;
+    --color-card:                #100B16;
+    --color-card-foreground:     #F8F5FA;
+    --color-muted:               #17121F;
+    --color-muted-foreground:    #B9AFBF;
+    --color-border:              #3A2450;
+    --color-input:               #3A2450;
+    --color-primary:             #FFFF11;
+    --color-primary-foreground:  #160020;
+    --color-secondary:           #21152A;
+    --color-secondary-foreground:#F8F5FA;
+    --color-accent:              #FFFF11;
+    --color-accent-foreground:   #160020;
+    --color-destructive:         #FF6B6B;
+    --color-destructive-foreground: #240006;
+    --color-success:             #55D98A;
+    --color-success-foreground:  #06180D;
+    --color-warning:             #FFC44D;
+    --color-warning-foreground:  #241400;
+    --color-ring:                #FFFF11;
+    --color-brand-border:        #4B0084;
+  }
+}
