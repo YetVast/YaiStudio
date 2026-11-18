@@ -1,0 +1,90 @@
+.nav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 0;
+  height: 100%;
+}
+
+.section {
+  margin-bottom: var(--space-1);
+}
+
+.sectionLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  padding: var(--space-3) var(--space-4) var(--space-1);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+  text-decoration: none;
+  border-radius: 0;
+  transition: background-color 150ms, color 150ms;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+
+.navItem:hover {
+  background-color: var(--color-muted);
+  color: var(--color-foreground);
+  text-decoration: none;
+}
+
+.navItem:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+
+.navItem.active {
+  color: var(--color-primary);
+  background-color: var(--color-secondary);
+  font-weight: 600;
+}
+
+.navItem.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--color-primary);
+}
+
+.navIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--space-2) 0;
+}
+
+.spacer {
+  flex: 1;
+}
