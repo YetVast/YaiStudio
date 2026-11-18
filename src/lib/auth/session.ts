@@ -48,25 +48,24 @@ function getSessionSecret(): Uint8Array {
   if (!secret || secret.trim() === '') {
     throw new Error(
       '[YAI Auth] YAI_SESSION_SECRET is not set. ' +
-        'Generate one with: openssl rand -base64 32',
+        'Set a random 32+ character secret in .env.local before running the app.',
     );
   }
   return new TextEncoder().encode(secret);
 }
 
-function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production';
-}
-
 // ---------------------------------------------------------------------------
-// Cookie helpers
+// Helpers
 // ---------------------------------------------------------------------------
 
 function cookieOptions() {
+  const isProduction = process.env.NODE_ENV === 'production';
   return {
     name: COOKIE_NAME,
     httpOnly: true,
-    secure: isProduction(),
+    // Strict transport security: only send over HTTPS in production
+    secure: isProduction,
+    // Lax allows top-level navigation to retain the session
     sameSite: 'lax' as const,
     path: '/',
     // No `domain` → host-bound; never set a wildcard parent domain.
