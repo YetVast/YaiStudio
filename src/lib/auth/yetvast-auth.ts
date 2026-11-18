@@ -1,73 +1,58 @@
 /**
- * YAI Studio — Yet Vast Auth Integration Adapter
+ * YAI Studio — Yet Vast Auth SDK integration (server-only)
  *
- * Boundary rules:
- * - This adapter interacts with the official Yet Vast Auth server endpoints.
- * - YAI owns its session; Yet Vast Auth owns identity issuance and JWKS.
- * - GitHub identity linking in Yet Vast Auth DOES NOT imply GitHub repository
- *   access. Storage authorization is a separate concern.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * AUTH REGISTRATION GATE
+ * ═══════════════════════════════════════════════════════════════════════════
+ * YAI Studio has NOT yet been registered at auth.yetvast.com.
+ * No real OAuth flow can run until:
+ *  1. The application is registered at https://auth.yetvast.com/admin/applications/register
+ *  2. A logicalAppId (YAI_LOGICAL_APP_ID) is assigned
+ *  3. The exact callback URI (YAI_AUTH_CALLBACK_URI) is approved
+ *  4. The provider policy is confirmed with Yet Vast Auth Admins
  *
- * Central policy gate (16 Nov 2026 docs):
- * - Google persistent identity and GitHub-only ephemeral access are mutually
- *   exclusive registration policies.
- * - This adapter supports the standard OAuth PKCE flow against Yet Vast Auth.
- *   The exact provider policy is managed in the Yet Vast Auth Admin console.
+ * All env vars required by this module are PLACEHOLDER until registration.
+ * Missing vars cause descriptive runtime errors — they do NOT crash at build.
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * Package: @yetvast/auth (installed via GitHub Packages registry)
+ * SDK version target: @yetvast/auth ^0.3.0
+ * If the package cannot be imported (NODE_AUTH_TOKEN absent at dev time),
+ * stub functions throw descriptive errors rather than crashing the build.
+ *
+ * JWKS verification is always done in-process via jose against:
+ *   https://auth.yetvast.com/.well-known/jwks.json
+ *
+ * Signing algorithm: EdDSA (Ed25519) per YVA-PROJECT-HANDBOOK §5.2
  */
 import 'server-only';
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
-export interface YetvastAuthConfig {
-  authServerOrigin: string; // e.g. https://auth.yetvast.com
-  logicalAppId: string;     // e.g. 'yai-studio'
-  redirectUri: string;      // e.g. http://localhost:3000/api/auth/callback
-}
-
-export function getAuthConfig(): YetvastAuthConfig {
-  const origin = process.env.YETVAST_AUTH_URL;
-  const appId = process.env.YETVAST_AUTH_APP_ID;
-  const redirectUri = process.env.YETVAST_AUTH_CALLBACK_URL || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback`;
-
-  if (!origin) {
-    throw new Error(
-      '[YAI Auth] YETVAST_AUTH_URL is not configured. ' +
-        'Set it in your environment or .env.local before initiating auth.',
-    );
-  }
-  if (!appId) {
-    throw new Error(
-      '[YAI Auth] YETVAST_AUTH_APP_ID is not configured. ' +
-        'Set the registered application ID from Yet Vast Auth Admin.',
-    );
-  }
-
-  return {
-    authServerOrigin: origin.replace(/\/$/, ''),
-    logicalAppId: appId,
-    redirectUri,
-  };
-}
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 
 // ---------------------------------------------------------------------------
-// Dynamic SDK Loader (graceful degradation if package not configured)
+// @yetvast/auth SDK — conditional import
 // ---------------------------------------------------------------------------
 
+/**
+ * SDK shape we depend on (subset of @yetvast/auth ^0.3.0 exports).
+ * We use a dynamic import so the build succeeds even when the private
+ * package cannot be resolved (NODE_AUTH_TOKEN absent in local dev).
+ */
 interface YetvastAuthSDK {
   createAppAuthorizeRedirect: (params: {
-    authOrigin: string;
     logicalAppId: string;
     redirectUri: string;
-  }) => string;
-  exchangeCodeForAssertion: (params: {
+    state: string;
+    codeChallenge: string;
+    codeChallengeMethod: 'S256';
     authOrigin: string;
-    logicalAppId: string;
+  }) => string;
+
+  exchangeCodeForAssertion: (params: {
     code: string;
     codeVerifier: string;
     redirectUri: string;
+    logicalAppId: string;
+    authOrigin: string;
   }) => Promise<{ assertion: string }>;
 }
 
@@ -118,222 +103,211 @@ async function loadSDK(): Promise<YetvastAuthSDK | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Authorization URL Generation
+// Environment helpers
 // ---------------------------------------------------------------------------
 
-export interface AuthorizeUrlResult {
-  url: string;
-  state: string;
-  codeVerifier: string;
+function requireEnv(name: string): string {
+  const val = process.env[name];
+  if (!val || val.trim() === '') {
+    throw new Error(
+      `[YAI Auth] Environment variable ${name} is not set. ` +
+        'YAI Studio has not yet been registered at auth.yetvast.com. ' +
+        'Complete the registration and set all required env vars before ' +
+        'enabling authentication.',
+    );
+  }
+  return val;
 }
 
+function getAuthConfig() {
+  return {
+    authOrigin: requireEnv('YETVAST_AUTH_ORIGIN'),
+    logicalAppId: requireEnv('YAI_LOGICAL_APP_ID'),
+    callbackUri: requireEnv('YAI_AUTH_CALLBACK_URI'),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// JWKS
+// ---------------------------------------------------------------------------
+
+let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function getJWKS(): ReturnType<typeof createRemoteJWKSet> {
+  if (!_jwks) {
+    const authOrigin = process.env.YETVAST_AUTH_ORIGIN ?? 'https://auth.yetvast.com';
+    _jwks = createRemoteJWKSet(
+      new URL(`${authOrigin}/.well-known/jwks.json`),
+    );
+  }
+  return _jwks;
+}
+
+// ---------------------------------------------------------------------------
+// Verified identity assertion shape
+// ---------------------------------------------------------------------------
+
+export interface VerifiedYetvastIdentity {
+  yvUserId: string;
+  email?: string;
+  githubLogin?: string;
+}
+
+type AssertionPayload = JWTPayload & {
+  sub: string;
+  email?: string;
+  github_login?: string;
+};
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 /**
- * Build the Yet Vast Auth authorization URL using PKCE.
- * Generates and returns state + code_verifier for session persistence.
+ * Build the Yet Vast Auth authorization URL to redirect the user to.
+ *
+ * Uses @yetvast/auth SDK if available; falls back to a manual URL build
+ * matching the documented OAuth initiation contract.
+ *
+ * @throws if required env vars are not set (AUTH REGISTRATION GATE)
+ * @throws if SDK is unavailable and cannot construct URL
  */
-export async function buildAuthorizeUrl(
-  codeVerifier: string,
-  codeChallenge: string,
+export async function buildAuthorizationUrl(
   state: string,
-  provider?: 'github' | 'google',
-): Promise<AuthorizeUrlResult> {
-  const config = getAuthConfig();
+  codeChallenge: string,
+  codeChallengeMethod: 'S256',
+): Promise<string> {
+  const { authOrigin, logicalAppId, callbackUri } = getAuthConfig();
   const sdk = await loadSDK();
 
   if (sdk) {
-    // Use official SDK if available
-    const base = sdk.createAppAuthorizeRedirect({
-      authOrigin: config.authServerOrigin,
-      logicalAppId: config.logicalAppId,
-      redirectUri: config.redirectUri,
+    return sdk.createAppAuthorizeRedirect({
+      logicalAppId,
+      redirectUri: callbackUri,
+      state,
+      codeChallenge,
+      codeChallengeMethod,
+      authOrigin,
     });
-    const url = new URL(base);
-    url.searchParams.set('code_challenge', codeChallenge);
-    url.searchParams.set('code_challenge_method', 'S256');
-    url.searchParams.set('state', state);
-    if (provider) {
-      url.searchParams.set('identity_provider', provider);
-    }
-    return { url: url.toString(), state, codeVerifier };
   }
 
-  // Fallback: construct standard OAuth 2.0 PKCE authorize URL
-  // Spec: GET /oauth/authorize?response_type=code&client_id=...&redirect_uri=...&scope=openid+profile+email&code_challenge=...&code_challenge_method=S256&state=...
+  // SDK unavailable — build URL manually matching documented /api/oauth/start contract
   if (_sdkLoadError) {
-    console.warn(`[YAI Auth] Using standard OAuth URL fallback: ${_sdkLoadError}`);
+    console.warn(`[YAI Auth] SDK unavailable: ${_sdkLoadError}`);
   }
 
-  const url = new URL(`${config.authServerOrigin}/oauth/authorize`);
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('client_id', config.logicalAppId);
-  url.searchParams.set('redirect_uri', config.redirectUri);
-  url.searchParams.set('scope', 'openid profile email');
-  url.searchParams.set('code_challenge', codeChallenge);
-  url.searchParams.set('code_challenge_method', 'S256');
+  const url = new URL(`${authOrigin}/api/oauth/start`);
+  url.searchParams.set('logical_app_id', logicalAppId);
+  url.searchParams.set('redirect_uri', callbackUri);
   url.searchParams.set('state', state);
-  if (provider) {
-    url.searchParams.set('identity_provider', provider);
-  }
-
-  return { url: url.toString(), state, codeVerifier };
-}
-
-// ---------------------------------------------------------------------------
-// Code Exchange & Token Verification
-// ---------------------------------------------------------------------------
-
-export interface VerifiedAssertion {
-  /** Yet Vast User ID — canonical cross-product identity */
-  yvUserId: string;
-  /** Primary email associated with Yet Vast identity */
-  email?: string;
-  /** Linked GitHub username, if connected via Yet Vast Auth */
-  githubLogin?: string;
-  /** Full raw claims for downstream inspection */
-  claims: Record<string, unknown>;
+  url.searchParams.set('code_challenge', codeChallenge);
+  url.searchParams.set('code_challenge_method', codeChallengeMethod);
+  url.searchParams.set('response_type', 'code');
+  return url.toString();
 }
 
 /**
- * Exchange the authorization code for an assertion token and verify it.
- * Verifies issuer, audience, expiry, and signature against Yet Vast Auth JWKS.
+ * Exchange an authorization code + PKCE verifier for a signed identity assertion.
+ *
+ * @throws if required env vars are not set (AUTH REGISTRATION GATE)
+ * @throws if SDK unavailable or exchange fails
  */
-export async function exchangeAndVerifyCode(
+export async function exchangeCode(
   code: string,
   codeVerifier: string,
-): Promise<VerifiedAssertion> {
-  const config = getAuthConfig();
+  redirectUri: string,
+): Promise<{ assertion: string }> {
+  const { authOrigin, logicalAppId } = getAuthConfig();
   const sdk = await loadSDK();
 
-  let assertionToken: string;
-
   if (sdk) {
-    const res = await sdk.exchangeCodeForAssertion({
-      authOrigin: config.authServerOrigin,
-      logicalAppId: config.logicalAppId,
+    return sdk.exchangeCodeForAssertion({
       code,
       codeVerifier,
-      redirectUri: config.redirectUri,
+      redirectUri,
+      logicalAppId,
+      authOrigin,
     });
-    assertionToken = res.assertion;
-  } else {
-    // Fallback: standard OAuth token exchange
-    const tokenUrl = `${config.authServerOrigin}/oauth/token`;
-    const body = new URLSearchParams({
-      grant_type: 'authorization_code',
-      client_id: config.logicalAppId,
-      code,
-      code_verifier: codeVerifier,
-      redirect_uri: config.redirectUri,
-    });
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(
-        `[YAI Auth] Token exchange failed (${response.status}): ${errText}`,
-      );
-    }
-
-    const data = (await response.json()) as {
-      access_token?: string;
-      id_token?: string;
-      assertion?: string;
-    };
-    assertionToken = (data.assertion || data.id_token || data.access_token) as string;
-    if (!assertionToken) {
-      throw new Error('[YAI Auth] No token returned in token exchange response');
-    }
   }
 
-  return verifyAssertionToken(assertionToken, config);
+  // SDK unavailable — attempt raw HTTP exchange matching /api/token contract
+  if (_sdkLoadError) {
+    throw new Error(
+      `[YAI Auth] Cannot exchange authorization code: SDK unavailable. ${_sdkLoadError}`,
+    );
+  }
+
+  const response = await fetch(`${authOrigin}/api/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      code_verifier: codeVerifier,
+      redirect_uri: redirectUri,
+      logical_app_id: logicalAppId,
+    }).toString(),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(
+      `[YAI Auth] Token exchange failed: HTTP ${response.status}. ${body}`,
+    );
+  }
+
+  const data = (await response.json()) as { assertion?: string };
+  if (!data.assertion) {
+    throw new Error('[YAI Auth] Token exchange returned no assertion.');
+  }
+  return { assertion: data.assertion };
 }
 
 /**
- * Verify the assertion JWT against Yet Vast Auth JWKS.
- * Checks:
- * - Alg is RS256
- * - Issuer matches YETVAST_AUTH_URL
- * - Audience matches YETVAST_AUTH_APP_ID
- * - Token is not expired
+ * Verify a Yet Vast Auth signed identity assertion against central JWKS.
+ *
+ * Validates: issuer, audience, expiry, signature (EdDSA/RS256).
+ *
+ * @throws if assertion is invalid, expired, or env vars are missing
  */
-async function verifyAssertionToken(
-  token: string,
-  config: YetvastAuthConfig,
-): Promise<VerifiedAssertion> {
-  const { createRemoteJWKSet, jwtVerify } = await import('jose');
+export async function verifyAssertion(
+  assertion: string,
+): Promise<VerifiedYetvastIdentity> {
+  const { authOrigin, logicalAppId } = getAuthConfig();
+  const jwks = getJWKS();
 
-  const jwksUrl = new URL(
-    '/.well-known/jwks.json',
-    config.authServerOrigin,
-  );
-  const JWKS = createRemoteJWKSet(jwksUrl);
+  const { payload } = await jwtVerify<AssertionPayload>(assertion, jwks, {
+    issuer: authOrigin,
+    audience: logicalAppId,
+    algorithms: ['EdDSA', 'RS256'],
+  });
 
-  try {
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: config.authServerOrigin,
-      audience: config.logicalAppId,
-      algorithms: ['RS256'],
-    });
-
-    const sub = payload.sub;
-    if (!sub || typeof sub !== 'string') {
-      throw new Error('[YAI Auth] Assertion payload missing sub claim');
-    }
-
-    return {
-      yvUserId: sub,
-      email: typeof payload.email === 'string' ? payload.email : undefined,
-      githubLogin:
-        typeof payload.github_login === 'string'
-          ? payload.github_login
-          : typeof payload.login === 'string'
-          ? payload.login
-          : undefined,
-      claims: payload as Record<string, unknown>,
-    };
-  } catch (err) {
-    // If JWKS verification fails (e.g. dev environment where auth server is a mock/placeholder),
-    // decode claims with strict validation and log warning.
-    // In production, this must fail.
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        `[YAI Auth] Token verification failed: ${(err as Error).message}`,
-      );
-    }
-
-    console.warn(
-      `[YAI Auth] JWKS verification failed (${(err as Error).message}). ` +
-        'Attempting unverified payload decode for development mode only.',
+  if (!payload.sub) {
+    throw new Error(
+      '[YAI Auth] Assertion missing sub claim (yvUserId). ' +
+        'Unexpected response from Yet Vast Auth.',
     );
-
-    return decodePayloadDevOnly(token);
-  }
-}
-
-/** Development-only decode: DO NOT USE IN PRODUCTION */
-function decodePayloadDevOnly(token: string): VerifiedAssertion {
-  const parts = token.split('.');
-  if (parts.length !== 3) {
-    throw new Error('[YAI Auth] Malformed JWT token');
-  }
-  const payloadJson = Buffer.from(parts[1], 'base64url').toString('utf-8');
-  const payload = JSON.parse(payloadJson) as Record<string, unknown>;
-
-  const sub = (payload.sub || payload.uid || payload.userId) as string;
-  if (!sub) {
-    throw new Error('[YAI Auth] Token payload missing sub/userId');
   }
 
   return {
-    yvUserId: sub,
-    email: payload.email as string | undefined,
-    githubLogin: (payload.github_login || payload.login) as string | undefined,
-    claims: payload,
+    yvUserId: payload.sub,
+    email: payload.email,
+    githubLogin: payload.github_login,
+  };
+}
+
+/**
+ * Returns diagnostic information about the SDK load state.
+ * Safe to call in health/status endpoints.
+ */
+export function getSdkDiagnostics(): {
+  sdkAvailable: boolean;
+  sdkLoadAttempted: boolean;
+  sdkLoadError: string | null;
+} {
+  return {
+    sdkAvailable: _sdk !== null,
+    sdkLoadAttempted: _sdkLoadAttempted,
+    sdkLoadError: _sdkLoadError,
   };
 }

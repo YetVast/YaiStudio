@@ -526,7 +526,7 @@ export async function listWorkspaces(ctx: StorageContext, parentPath = 'workspac
     const workspaces: WorkspaceData[] = [];
 
     for (const item of items) {
-      if (item.type === 'tree') {
+      if (item.type === 'dir') {
         const dataFile = await gh.getFile(ctx.githubLogin, DATA_REPO_NAME, `${item.path}/workspaceData.json`, ctx.githubToken);
         if (dataFile) {
           try {
@@ -648,7 +648,7 @@ export async function listCandidates(ctx: StorageContext): Promise<MemoryCandida
     const candidates: MemoryCandidate[] = [];
 
     for (const item of items) {
-      if (item.type === 'blob' && item.path.endsWith('.json')) {
+      if (item.type === 'file' && item.path.endsWith('.json')) {
         const file = await gh.getFile(ctx.githubLogin, DATA_REPO_NAME, item.path, ctx.githubToken);
         if (file) {
           try {
@@ -782,10 +782,10 @@ export async function listActivity(
   try {
     const products = await gh.listDirectory(ctx.githubLogin, DATA_REPO_NAME, dirPath, ctx.githubToken);
     for (const prod of products) {
-      if (prod.type === 'tree') {
+      if (prod.type === 'dir') {
         const files = await gh.listDirectory(ctx.githubLogin, DATA_REPO_NAME, prod.path, ctx.githubToken);
         for (const f of files) {
-          if (f.type === 'blob' && f.path.endsWith('.json')) {
+          if (f.type === 'file' && f.path.endsWith('.json')) {
             const file = await gh.getFile(ctx.githubLogin, DATA_REPO_NAME, f.path, ctx.githubToken);
             if (file) {
               try {
@@ -820,7 +820,7 @@ export async function listKnowledge(ctx: StorageContext): Promise<KnowledgeItem[
     const items: KnowledgeItem[] = [];
 
     for (const f of files) {
-      if (f.type === 'blob' && f.path.endsWith('.json')) {
+      if (f.type === 'file' && f.path.endsWith('.json')) {
         const file = await gh.getFile(ctx.githubLogin, DATA_REPO_NAME, f.path, ctx.githubToken);
         if (file) {
           try {
