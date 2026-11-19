@@ -19,19 +19,7 @@ export type LocalProviderStatus =
 
 export type InferenceEnvironment = 'browser-device' | 'server-vaulted';
 
-export interface InferenceCapabilities {
-  streaming: boolean;
-  cancellation: boolean;
-  tokenEstimation: boolean;
-  multimodal: boolean;
-  localOnDevice: boolean;
-}
-
-export interface InferenceDeviceRequirements {
-  requiresWebGPU: boolean;
-  minRamGb: number;
-  minStorageMb: number;
-}
+export type ModelCompatibilityStatus = 'supported' | 'unsupported';
 
 export interface LocalModelDescriptor {
   id: string;
@@ -39,8 +27,8 @@ export interface LocalModelDescriptor {
   description: string;
   provider: 'local-litert';
   format: 'litertlm' | 'task' | 'bin';
-  parameters: string; // e.g. "2B"
-  quantization: string; // e.g. "INT4"
+  parameters: string;
+  quantization: string;
   downloadSizeBytes: number;
   installedSizeBytes: number;
   downloadUrl: string;
@@ -48,6 +36,10 @@ export interface LocalModelDescriptor {
   contextLength: number;
   license: string;
   recommendedGpuMemoryGb: number;
+  compatibility: ModelCompatibilityStatus;
+  unsupportedReason?: string;
+  huggingFaceRepo?: string;
+  artifactFile?: string;
 }
 
 export type ModelInstallationStatus =
@@ -63,28 +55,63 @@ export interface InstalledModelRecord {
   progressPercent: number;
   downloadedBytes: number;
   totalBytes: number;
+  downloadSpeedBytesPerSec?: number;
   installedAt?: string;
   lastUsedAt?: string;
   error?: string;
+  verifiedChecksum?: boolean;
 }
 
 export interface DeviceCapabilityReport {
   hasWebGPU: boolean;
   hasWasm: boolean;
   hasOpfs: boolean;
+  hasPersistentStorage?: boolean;
+  isSecureContext?: boolean;
   gpuAdapterInfo?: {
     vendor?: string;
     architecture?: string;
     description?: string;
+    device?: string;
+  };
+  gpuLimits?: {
+    maxBufferSize?: number;
+    maxStorageBufferBindingSize?: number;
+    maxComputeWorkgroupStorageSize?: number;
   };
   storage: {
     usageBytes: number;
     quotaBytes: number;
     freeBytes: number;
     usagePercent: number;
+    modelStorageBytes?: number;
   };
   isSupported: boolean;
   unsupportedReasons: string[];
+}
+
+export type RuntimeState =
+  | 'UNINITIALIZED'
+  | 'CHECKING_COMPATIBILITY'
+  | 'INITIALIZING_RUNTIME'
+  | 'READY'
+  | 'LOADING_MODEL'
+  | 'MODEL_READY'
+  | 'GENERATING'
+  | 'ERROR'
+  | 'DISPOSING';
+
+export type DiagnosticLogLevel = 'info' | 'warn' | 'error' | 'success';
+
+export interface DiagnosticLogEntry {
+  id: string;
+  timestamp: string;
+  level: DiagnosticLogLevel;
+  event: string;
+  modelId?: string;
+  durationMs?: number;
+  details?: Record<string, unknown>;
+  error?: string;
 }
 
 export interface UnifiedInferenceMessage {
@@ -101,6 +128,7 @@ export interface UnifiedInferenceRequest {
   temperature?: number;
   maxTokens?: number;
   signal?: AbortSignal;
+  onToken?: (token: string) => void;
 }
 
 export interface UnifiedInferenceResult {
@@ -120,8 +148,19 @@ export interface LocalInferenceMeasurement {
   initDurationMs: number;
   modelLoadDurationMs: number;
   timeToFirstTokenMs: number;
+  generationDurationMs?: number;
   totalDurationMs: number;
   tokensGenerated: number;
   tokensPerSecond: number;
   memoryUsageMb?: number;
+  isExactTokenCount?: boolean;
+}
+
+export interface NetworkVerificationReport {
+  isZeroCloudVerified: boolean;
+  modelDownloadRequests: number;
+  runtimeAssetRequests: number;
+  applicationRequests: number;
+  inferenceOutboundRequests: number;
+  interceptedEndpoints: string[];
 }
