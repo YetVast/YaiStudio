@@ -1,5 +1,16 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { PWAProvider } from '@/lib/pwa/pwa-context';
 import '@/styles/globals.css';
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#4B0084' },
+    { media: '(prefers-color-scheme: dark)', color: '#09060D' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   title: {
@@ -7,6 +18,22 @@ export const metadata: Metadata = {
     default: 'YAI Studio',
   },
   description: 'Your personal intelligence workspace — YAI Studio by Yet Vast Solutions',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/icons/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'YAI Studio',
+  },
 };
 
 export default function RootLayout({
@@ -36,7 +63,9 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <PWAProvider>{children}</PWAProvider>
+      </body>
     </html>
   );
 }

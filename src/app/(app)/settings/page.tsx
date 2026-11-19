@@ -20,8 +20,13 @@ import {
   Database,
   Cpu,
   Layers,
+  Smartphone,
+  Wifi,
+  WifiOff,
+  Download,
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { usePWA } from '@/lib/pwa/pwa-context';
 import Button from '@/components/ui/Button';
 import styles from './Settings.module.css';
 
@@ -47,6 +52,14 @@ interface StorageConnectionStatus {
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const {
+    isOnline,
+    isInstallable,
+    isInstalled,
+    isUpdateAvailable,
+    promptInstall,
+    applyUpdate,
+  } = usePWA();
 
   const [user, setUser] = useState<SessionUser | null>(null);
   const [storageStatus, setStorageStatus] = useState<StorageConnectionStatus | null>(null);
@@ -323,6 +336,84 @@ export default function SettingsPage() {
               <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'} Theme</span>
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* ── Section: Local-First PWA & Offline Platform ── */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <Smartphone size={18} className={styles.sectionIcon} />
+          <span>Local-First PWA & Offline Platform</span>
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardRow}>
+            <span className={styles.rowLabel}>Network Connectivity</span>
+            <span className={styles.rowValue}>
+              {isOnline ? (
+                <span className={styles.badgeSuccess}>
+                  <Wifi size={12} />
+                  Online — Live Synchronization
+                </span>
+              ) : (
+                <span className={styles.badgeWarning}>
+                  <WifiOff size={12} />
+                  Offline — Local Mode
+                </span>
+              )}
+            </span>
+          </div>
+
+          <div className={styles.cardRow}>
+            <span className={styles.rowLabel}>Application Environment</span>
+            <span className={styles.rowValue}>
+              {isInstalled ? (
+                <span className={styles.badgeSuccess}>
+                  <CheckCircle2 size={12} />
+                  Installed PWA (Standalone)
+                </span>
+              ) : (
+                <span>Web Browser Tab</span>
+              )}
+            </span>
+          </div>
+
+          <div className={styles.cardRow}>
+            <span className={styles.rowLabel}>Offline App Shell</span>
+            <span className={styles.rowValue}>
+              <span className={styles.badgeSuccess}>
+                <CheckCircle2 size={12} />
+                Service Worker Cached (v1)
+              </span>
+            </span>
+          </div>
+
+          <div className={styles.infoBox}>
+            <Info size={20} />
+            <div>
+              <strong>Local-First Architecture</strong>
+              YAI Studio caches the application shell and UI offline. When disconnected from the internet,
+              you can continue reviewing workspaces, viewing cached conversations, and using local intelligence.
+              Mutations will synchronize to GitHub once connectivity is restored.
+            </div>
+          </div>
+
+          {(isInstallable || isUpdateAvailable) && (
+            <div className={styles.cardFooter}>
+              {isInstallable && (
+                <Button onClick={promptInstall} variant="primary">
+                  <Download size={14} />
+                  <span>Install YAI Studio Application</span>
+                </Button>
+              )}
+              {isUpdateAvailable && (
+                <Button onClick={applyUpdate} variant="outline">
+                  <RefreshCw size={14} />
+                  <span>Apply Application Update</span>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

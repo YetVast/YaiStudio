@@ -3,13 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Moon, Sun, Menu } from 'lucide-react';
+import { Moon, Sun, Menu, WifiOff, RefreshCw, Download } from 'lucide-react';
 import { ThemeProvider, useTheme } from '@/components/providers/ThemeProvider';
+import { usePWA } from '@/lib/pwa/pwa-context';
 import AppNav from '@/components/navigation/AppNav';
 import styles from './AppShell.module.css';
 
 function ShellInner({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
+  const { isOnline, isInstallable, isUpdateAvailable, promptInstall, applyUpdate } = usePWA();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -58,6 +60,45 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
         <div className={styles.headerRight}>
+          {/* Connectivity Status Indicator */}
+          {!isOnline && (
+            <div
+              className={styles.offlinePill}
+              role="status"
+              title="You are currently offline. Operating in local mode."
+              aria-label="Offline — Local Mode"
+            >
+              <WifiOff size={13} aria-hidden="true" />
+              <span>Offline</span>
+            </div>
+          )}
+
+          {/* Update Available Notification */}
+          {isUpdateAvailable && (
+            <button
+              className={styles.updatePill}
+              onClick={applyUpdate}
+              title="A new version of YAI Studio is ready. Click to reload and update."
+              aria-label="Update available. Click to reload."
+            >
+              <RefreshCw size={13} aria-hidden="true" />
+              <span>Update Ready</span>
+            </button>
+          )}
+
+          {/* Install PWA Prompt */}
+          {isInstallable && (
+            <button
+              className={styles.installButton}
+              onClick={promptInstall}
+              title="Install YAI Studio as an application on your device"
+              aria-label="Install YAI Studio application"
+            >
+              <Download size={13} aria-hidden="true" />
+              <span>Install</span>
+            </button>
+          )}
+
           <button
             className={styles.iconButton}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
