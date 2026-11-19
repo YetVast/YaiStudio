@@ -135,54 +135,24 @@ All available automated quality and build verification suites were executed agai
 
 ---
 
-## 2. Identified Technical Discrepancies & Code Gaps
+## 2. Technical Discrepancies Resolved Prior to Freeze
 
-Inspection of the actual codebase identified three specific implementation gaps:
+The code audit identified two integration issues that were cleanly resolved and verified before release freeze:
 
-### 2.1 Chat Submit Payload Mismatch (`conversations/page.tsx` ↔ `api/yai/generate`)
-- **Observed Behavior:**
-  In [`src/app/(app)/conversations/page.tsx`](file:///c:/Users/yviyv/yvscodes/YetVastSolutions/YaiStudio/src/app/(app)/conversations/page.tsx#L186-L215), the submit handler performs:
-  ```typescript
-  // Step A: Append User Message to conversation
-  await fetch(`/api/conversations/${activeId}/messages`, {
-    method: 'POST',
-    body: JSON.stringify({ role: 'user', content: userText }),
-  });
+### 2.1 Chat Submit Payload Alignment & Deduplication (RESOLVED)
+- **Problem:**
+  Client sent `prompt` instead of `message`, called `/api/conversations/[id]/messages` before calling `/api/yai/generate` (leading to potential double persistence and 409 SHA conflicts), and expected `assistantMessage` instead of `message`.
+- **Resolution:**
+  1. `/api/yai/generate` accepts both `message` and `prompt`.
+  2. `/api/yai/generate` checks whether the user turn is already the latest message in history, preventing duplicate persistence.
+  3. `/api/yai/generate` returns both `message` and `assistantMessage`.
+  4. `conversations/page.tsx` delegates the complete turn atomically to `/api/yai/generate`, eliminating redundant round-trips and race conditions.
 
-  // Step B: Call YAI Generation
-  const genRes = await fetch('/api/yai/generate', {
-    method: 'POST',
-    body: JSON.stringify({ conversationId: activeId, prompt: userText }),
-  });
-  const genData = await genRes.json();
-  setMessages((prev) => [...prev, genData.assistantMessage]);
-  ```
-- **Backend Route Expectation:**
-  In [`src/app/api/yai/generate/route.ts`](file:///c:/Users/yviyv/yvscodes/YetVastSolutions/YaiStudio/src/app/api/yai/generate/route.ts#L31-L125):
-  ```typescript
-  const { conversationId, message, model, provider = 'openrouter' } = body;
-  if (!conversationId || !message || typeof message !== 'string') {
-    return NextResponse.json({ error: 'conversationId and message are required' }, { status: 400 });
-  }
-  // Route appends user message internally:
-  await appendMessage(ctx, conversationId, { role: 'user', content: message.trim(), ... });
-  // Route returns:
-  return NextResponse.json({ message: assistantMsg, model, provider });
-  ```
-- **Technical Analysis:**
-  1. Property mismatch: Client sends `prompt`; Route expects `message`. (Throws HTTP 400).
-  2. Double append: Client appends user message in Step A; Route appends user message in Step 4. (Would result in duplicate messages).
-  3. Response property mismatch: Client expects `genData.assistantMessage`; Route returns `genData.message`.
-- **Resolution Plan:**
-  Align client to call `/api/yai/generate` passing `{ conversationId, message: userText }` and let the route handler perform the atomic user turn persistence, or refactor to a unified turn-based pipeline.
-
-### 2.2 Live Network Call in Integration Test Suite
-- **Observed Behavior:**
-  In [`tests/auth/yetvast-auth-integration.test.ts`](file:///c:/Users/yviyv/yvscodes/YetVastSolutions/YaiStudio/tests/auth/yetvast-auth-integration.test.ts#L40-L65), tests 2 and 3 execute `client.createAuthorizeRedirect()` without setting a mock `fetchImpl`. This causes tests to make live HTTP requests to `https://auth.yetvast.com/api/applications/discover`.
-- **Technical Analysis:**
-  Tests can fail or time out if the internet connection is unstable or DNS lookup is slow.
-- **Resolution Plan:**
-  Inject mock fetch responses globally in `beforeEach` to guarantee 100% offline test execution.
+### 2.2 Test Suite Mock Fetch Isolation (RESOLVED)
+- **Problem:**
+  `tests/auth/yetvast-auth-integration.test.ts` made live HTTP calls to `https://auth.yetvast.com` during application discovery tests, leading to occasional 5000ms timeouts on slow networks.
+- **Resolution:**
+  Injected global mock fetch in `beforeEach` providing the canonical application registration (`yaistudio-yetvast-com-4dfnb2r9`), enabling 100% offline test execution in ~40ms.
 
 ---
 

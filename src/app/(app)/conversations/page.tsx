@@ -182,26 +182,13 @@ export default function ConversationsPage() {
     setGenerating(true);
 
     try {
-      // Step A: Append User Message to conversation
-      const msgRes = await fetch(`/api/conversations/${activeId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: 'user',
-          content: userText,
-        }),
-      });
-
-      if (!msgRes.ok) {
-        throw new Error('Failed to persist user message to repository');
-      }
-
-      // Step B: Call YAI Generation
+      // Call YAI Generation (handles user message persistence + cloud inference + assistant turn)
       const genRes = await fetch('/api/yai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId: activeId,
+          message: userText,
           prompt: userText,
         }),
       });
@@ -214,8 +201,10 @@ export default function ConversationsPage() {
       }
 
       // Update state with assistant response
-      setMessages((prev) => [...prev, genData.assistantMessage]);
-      setMarkdownTranscript(genData.updatedMarkdown);
+      const assistantMsg = genData.assistantMessage || genData.message;
+      if (assistantMsg) {
+        setMessages((prev) => [...prev, assistantMsg]);
+      }
       setSyncStatus('saved');
     } catch (err) {
       setSyncStatus('error');

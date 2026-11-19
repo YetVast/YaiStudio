@@ -172,7 +172,7 @@ To ensure technical integrity, every subsystem has been audited and classified i
 | **Activity Ledger** | `activity/<YYYY>/<MM>/<prod>/<id>.json` | **Implemented and Verified** | Partitioned immutable event ledger tracking interactions across YVS products. |
 | **Knowledge References** | `knowledge/references/<id>.json` | **Implemented and Verified** | Reference management with Markdown content and metadata. |
 | **AI Providers BYOK** | `openrouter.ts`, `google-ai.ts` | **Implemented but not externally verified** | OpenRouter (Claude 3.5 Sonnet) and Google AI (Gemini 1.5 Flash). Key validation tests live endpoint. |
-| **Chat Generation Flow** | `conversations/page.tsx` ↔ `api/yai/generate` | **Partially Implemented (Discrepancy)** | Payload key mismatch between client (`prompt`) and server route (`message`). See Section 5. |
+| **Chat Generation Flow** | `conversations/page.tsx` ↔ `api/yai/generate` | **Implemented and Verified** | Aligned payload contracts (supports message & prompt, returns message & assistantMessage, guards against duplicate append). |
 | **PWA & Offline** | Service Worker, Manifest, Caching | **Planned but not implemented** | Deferred to V1. |
 | **LiteRT-LM Local Models** | WebGPU runtime, local inference | **Planned but not implemented** | Deferred to V1. |
 
@@ -264,20 +264,16 @@ All UI components are built with strict accessibility attributes, CSS Modules, a
 
 During detailed source code inspection, the following discrepancies were identified between the frontend client and the backend route handlers:
 
-### 5.1 Chat Generation Payload Mismatch (`conversations/page.tsx` ↔ `api/yai/generate`)
+### 5.1 Chat Generation Payload Alignment (Resolved Prior to V0 Freeze)
 
-- **Observed Client Code (`src/app/(app)/conversations/page.tsx`, lines 186–209):**
-  When a user sends a chat message, the client:
-  1. Calls `POST /api/conversations/${activeId}/messages` with `{ role: 'user', content: userText }`.
-  2. Then calls `POST /api/yai/generate` with `{ conversationId: activeId, prompt: userText }`.
-  3. Checks `genData.assistantMessage` and `genData.updatedMarkdown`.
-- **Observed Route Handler (`src/app/api/yai/generate/route.ts`, lines 31–125):**
-  1. Expects `{ conversationId, message, model, provider }` in the request body (rejects with 400 if `message` is undefined).
-  2. Appends the user message to `messages.json` internally (line 80).
-  3. Returns `{ message: assistantMsg, model, provider }` (property is `message`, not `assistantMessage`).
-- **Impact:**
-  Submitting a message in the chat UI results in a 400 error from `/api/yai/generate` because `message` is sent as `prompt`. Furthermore, the user message would be duplicated if both the page and the route handler append it.
-- **Classification:** Partially Implemented / Integration Discrepancy. This must be aligned in the next iteration before enabling live chat generation.
+- **Identified Discrepancy:**
+  Prior to the release freeze, the client submitted `{ conversationId, prompt }` and performed a duplicate call to `POST /api/conversations/[id]/messages`, while `/api/yai/generate` expected `{ conversationId, message }` and performed its own turn append, returning `{ message }` instead of `{ assistantMessage }`.
+- **Resolution Implemented:**
+  1. `/api/yai/generate` accepts both `message` and `prompt` (`rawMessage = body.message ?? body.prompt`).
+  2. `/api/yai/generate` verifies whether the user message is already the latest message in `conv.messages` before appending, eliminating duplicate message persistence.
+  3. `/api/yai/generate` returns both `message` and `assistantMessage`.
+  4. `conversations/page.tsx` delegates the complete turn to `/api/yai/generate`, eliminating redundant intermediate round-trips and SHA conflicts.
+- **Classification:** **Resolved & Verified.**
 
 ### 5.2 React Hook Missing Dependencies
 

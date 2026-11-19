@@ -28,14 +28,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { conversationId, message, model, provider = 'openrouter' } = body;
+    const { conversationId, model, provider = 'openrouter' } = body;
+    const rawMessage = body.message ?? body.prompt;
 
-    if (!conversationId || !message || typeof message !== 'string') {
+    if (!conversationId || !rawMessage || typeof rawMessage !== 'string' || !rawMessage.trim()) {
       return NextResponse.json(
-        { error: 'conversationId and message are required' },
+        { error: 'conversationId and message (or prompt) are required' },
         { status: 400 },
       );
     }
+    const message = rawMessage.trim();
 
     const ctx = { githubToken: token, githubLogin: session.githubLogin };
 
@@ -69,20 +71,27 @@ export async function POST(request: NextRequest) {
       console.warn('[YAI Generate] Failed to load memory context, proceeding without it:', e);
     }
 
-    // 3. Assemble message history
+    // 3. Assemble message history & check if user message is already appended
+    const lastMsg = conv.messages[conv.messages.length - 1];
+    const alreadyAppended =
+      lastMsg && lastMsg.role === 'user' && lastMsg.content.trim() === message;
+
     const history: GenerationMessage[] = conv.messages.map((m) => ({
       role: m.role,
       content: m.content,
     }));
-    history.push({ role: 'user', content: message.trim() });
 
-    // 4. Append user message to canonical messages.json first
-    await appendMessage(ctx, conversationId, {
-      role: 'user',
-      content: message.trim(),
-      model: model || conv.meta.model,
-      provider,
-    });
+    if (!alreadyAppended) {
+      history.push({ role: 'user', content: message });
+
+      // 4. Append user message to canonical messages.json first
+      await appendMessage(ctx, conversationId, {
+        role: 'user',
+        content: message,
+        model: model || conv.meta.model,
+        provider,
+      });
+    }
 
     // 5. Execute cloud inference
     const generationResult = await executeGeneration(
@@ -120,6 +129,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: assistantMsg,
+      assistantMessage: assistantMsg,
       model: generationResult.model,
       provider: generationResult.provider,
     });

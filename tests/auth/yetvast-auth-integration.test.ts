@@ -15,16 +15,41 @@ import { SignJWT, exportJWK } from 'jose';
 
 describe('Yet Vast Auth Generic Discovery & Migration', () => {
   const originalEnv = { ...process.env };
+  const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
     process.env = { ...originalEnv };
     process.env.YETVAST_AUTH_ORIGIN = 'https://auth.yetvast.com';
     process.env.NEXT_PUBLIC_YAI_ORIGIN = 'https://yaistudio.yetvast.com';
     process.env.YAI_SESSION_SECRET = 'test-secret-at-least-32-chars-long-for-signing';
+
+    globalThis.fetch = (async (input, init) => {
+      const urlStr =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : (input as Request).url;
+      const url = new URL(urlStr);
+      if (url.pathname === '/api/applications/discover') {
+        return new Response(
+          JSON.stringify({
+            applicationId: 'yaistudio-yetvast-com-4dfnb2r9',
+            name: 'YAI Studio',
+            primaryOrigin: 'https://yaistudio.yetvast.com',
+            callbackUrl: 'https://yaistudio.yetvast.com/api/auth/callback',
+            status: 'APPROVED',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      return originalFetch(input, init);
+    }) as typeof fetch;
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
+    globalThis.fetch = originalFetch;
   });
 
   it('initializes using only authServerOrigin and appOrigin without configured Application ID', () => {
