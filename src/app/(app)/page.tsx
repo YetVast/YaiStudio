@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import styles from './Overview.module.css';
 
 export default function OverviewPage() {
@@ -27,10 +28,10 @@ export default function OverviewPage() {
           </p>
         </div>
         <div className={styles.headerActions}>
-          <Link href="/conversations" className={styles.newConvBtn}>
+          <Button href="/conversations" variant="primary">
             <Plus size={16} />
             <span>New Conversation</span>
-          </Link>
+          </Button>
         </div>
       </div>
 
@@ -130,10 +131,10 @@ export default function OverviewPage() {
             <MessageSquare size={32} className={styles.emptyIcon} />
             <h3>No conversations yet</h3>
             <p>Start a conversation with YAI to explore your thoughts and build context.</p>
-            <Link href="/conversations" className={styles.actionBtn}>
+            <Button href="/conversations" variant="primary" size="sm">
               <Plus size={14} />
               <span>Start Conversation</span>
-            </Link>
+            </Button>
           </div>
         </div>
 
@@ -156,9 +157,9 @@ export default function OverviewPage() {
               Interactions across YAI Studio and authorized Yet Vast products (Cogmit, Fyuniverse)
               are recorded here.
             </p>
-            <Link href="/activity" className={styles.secondaryBtn}>
+            <Button href="/activity" variant="outline" size="sm">
               <span>Inspect Activity Ledger</span>
-            </Link>
+            </Button>
           </div>
         </div>
       </div>

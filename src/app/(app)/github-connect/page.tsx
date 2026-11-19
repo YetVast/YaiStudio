@@ -1,5 +1,6 @@
 import React from 'react';
 import { GitBranch, Shield, Lock, ExternalLink, ArrowRight } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import styles from './GitHubConnect.module.css';
 
 export default function GitHubConnectPage() {
@@ -35,10 +36,10 @@ export default function GitHubConnectPage() {
         </div>
 
         <div className={styles.actions}>
-          <a href="/api/auth/github/connect" className={styles.connectButton}>
+          <Button href="/api/auth/github/connect" variant="primary" size="lg" fullWidth>
             <span>Authorize GitHub Storage</span>
             <ArrowRight size={16} />
-          </a>
+          </Button>
         </div>
 
         <p className={styles.note}>

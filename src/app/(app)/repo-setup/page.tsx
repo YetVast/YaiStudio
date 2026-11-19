@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Database, Plus, CheckCircle, RefreshCw, AlertCircle, FileCode } from 'lucide-react';
+import { Database, Plus, CheckCircle, RefreshCw, AlertCircle, FileCode, GitBranch } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import styles from './RepoSetup.module.css';
 
 interface ConnectionStatus {
@@ -31,8 +32,13 @@ export default function RepoSetupPage() {
       if (res.ok) {
         const data = await res.json();
         setStatus(data);
-        if (data.repoExists && data.isInitialized) {
-          router.push('/');
+        if (!data.connected) {
+          setErrorMessage('GitHub storage is not authorized. Please authorize GitHub storage access first.');
+        } else {
+          setErrorMessage(null);
+          if (data.repoExists && data.isInitialized) {
+            router.push('/');
+          }
         }
       }
     } catch {
@@ -84,6 +90,12 @@ export default function RepoSetupPage() {
     }
   };
 
+  const isAuthRequired =
+    status?.connected === false ||
+    (errorMessage !== null &&
+      (errorMessage.toLowerCase().includes('not authorized') ||
+        errorMessage.toLowerCase().includes('authorize github')));
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -102,13 +114,29 @@ export default function RepoSetupPage() {
 
         <h1 className={styles.title}>Personal Intelligence Storage Setup</h1>
         <p className={styles.subtitle}>
-          Repository: <strong>{status?.githubLogin}/YVSApps_Data_YaiStudio</strong>
+          Repository: <strong>{status?.githubLogin ? `${status.githubLogin}/YVSApps_Data_YaiStudio` : 'YVSApps_Data_YaiStudio'}</strong>
         </p>
 
         {errorMessage && (
           <div className={styles.errorAlert} role="alert">
-            <AlertCircle size={16} />
-            <span>{errorMessage}</span>
+            <div className={styles.errorContent}>
+              <AlertCircle size={18} className={styles.errorIcon} />
+              <div className={styles.errorText}>
+                <span>{errorMessage}</span>
+              </div>
+            </div>
+            {isAuthRequired && (
+              <div className={styles.errorAction}>
+                <Button
+                  href="/api/auth/github/connect"
+                  variant="primary"
+                  size="sm"
+                >
+                  <GitBranch size={14} />
+                  <span>Authorize GitHub</span>
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -127,17 +155,20 @@ export default function RepoSetupPage() {
             </div>
             <p className={styles.stepDesc}>
               The repository <code>YVSApps_Data_YaiStudio</code> was not found under your GitHub
-              account (<code>@{status?.githubLogin}</code>).
+              account (<code>@{status?.githubLogin || 'unknown'}</code>).
               Per YAI Studio invariants, it must be created explicitly with private visibility.
             </p>
-            <button
+            <Button
               onClick={handleCreateRepo}
               disabled={actionLoading}
-              className={styles.primaryButton}
+              loading={actionLoading}
+              variant="primary"
+              size="lg"
+              fullWidth
             >
               <Plus size={16} />
               <span>{actionLoading ? 'Creating repository...' : 'Create Private Repository'}</span>
-            </button>
+            </Button>
           </div>
         ) : !status?.isInitialized ? (
           <div className={styles.stepBox}>
@@ -164,31 +195,39 @@ export default function RepoSetupPage() {
               </ul>
             </div>
 
-            <button
+            <Button
               onClick={handleInitialize}
               disabled={actionLoading}
-              className={styles.primaryButton}
+              loading={actionLoading}
+              variant="primary"
+              size="lg"
+              fullWidth
             >
               <CheckCircle size={16} />
               <span>{actionLoading ? 'Initializing...' : 'Initialize Personal Intelligence Storage'}</span>
-            </button>
+            </Button>
           </div>
         ) : (
           <div className={styles.readyBox}>
             <CheckCircle size={32} className={styles.readyIcon} />
             <h3>Storage is ready!</h3>
             <p>Your repository is private and initialized.</p>
-            <button onClick={() => router.push('/')} className={styles.primaryButton}>
+            <Button href="/" variant="primary" size="lg" fullWidth>
               Go to Overview
-            </button>
+            </Button>
           </div>
         )}
 
         <div className={styles.footerActions}>
-          <button onClick={fetchStatus} disabled={actionLoading} className={styles.textButton}>
+          <Button
+            onClick={fetchStatus}
+            disabled={actionLoading}
+            variant="ghost"
+            size="sm"
+          >
             <RefreshCw size={14} />
             <span>Re-check repository status</span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

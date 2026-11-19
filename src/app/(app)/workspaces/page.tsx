@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Folder, Plus, ChevronRight, MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import type { WorkspaceData, ConversationIndexEntry } from '@/types/personal-intelligence';
 import styles from './Workspaces.module.css';
 
@@ -95,10 +96,10 @@ export default function WorkspacesPage() {
             Organize conversations and knowledge into nested workspaces stored directly in your repository.
           </p>
         </div>
-        <button onClick={() => setShowModal(true)} className={styles.primaryBtn}>
+        <Button onClick={() => setShowModal(true)} variant="primary">
           <Plus size={16} />
           <span>New Workspace</span>
-        </button>
+        </Button>
       </div>
 
       {errorMessage && (
@@ -126,9 +127,9 @@ export default function WorkspacesPage() {
               <div className={styles.emptyPanel}>
                 <p>No custom workspaces created yet.</p>
                 <p className={styles.emptySub}>All new conversations are currently Unfiled.</p>
-                <button onClick={() => setShowModal(true)} className={styles.smallActionBtn}>
+                <Button onClick={() => setShowModal(true)} variant="secondary" size="sm">
                   Create your first workspace
-                </button>
+                </Button>
               </div>
             ) : (
               <div className={styles.workspaceList}>
@@ -220,16 +221,21 @@ export default function WorkspacesPage() {
               className={styles.modalInput}
             />
             <div className={styles.modalActions}>
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className={styles.modalCancelBtn}
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button type="submit" disabled={creating} className={styles.modalSubmitBtn}>
+              </Button>
+              <Button
+                type="submit"
+                disabled={creating}
+                loading={creating}
+                variant="primary"
+              >
                 {creating ? 'Creating...' : 'Create Workspace'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

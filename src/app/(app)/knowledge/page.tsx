@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { BookOpen, Plus, Search, Tag, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
 import { formatMarkdown } from '@/lib/client/safe-markdown';
 import type { KnowledgeItem } from '@/types/personal-intelligence';
+import Button from '@/components/ui/Button';
 import styles from './Knowledge.module.css';
 
 export default function KnowledgePage() {
@@ -108,10 +109,10 @@ export default function KnowledgePage() {
             data repository.
           </p>
         </div>
-        <button onClick={() => setShowModal(true)} className={styles.primaryBtn}>
+        <Button onClick={() => setShowModal(true)} variant="primary">
           <Plus size={16} />
           <span>New Note</span>
-        </button>
+        </Button>
       </div>
 
       {errorMessage && (
@@ -145,9 +146,9 @@ export default function KnowledgePage() {
               <div className={styles.emptyList}>
                 <BookOpen size={32} className={styles.emptyIcon} />
                 <p>No knowledge notes found.</p>
-                <button onClick={() => setShowModal(true)} className={styles.smallActionBtn}>
+                <Button onClick={() => setShowModal(true)} variant="secondary" size="sm">
                   Create Note
-                </button>
+                </Button>
               </div>
             ) : (
               <div className={styles.itemList}>
@@ -280,16 +281,21 @@ export default function KnowledgePage() {
               className={styles.modalInput}
             />
             <div className={styles.modalActions}>
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className={styles.modalCancelBtn}
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button type="submit" disabled={saving} className={styles.modalSubmitBtn}>
+              </Button>
+              <Button
+                type="submit"
+                disabled={saving}
+                loading={saving}
+                variant="primary"
+              >
                 {saving ? 'Saving...' : 'Save Note'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

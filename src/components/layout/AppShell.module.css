@@ -29,6 +29,26 @@
   gap: var(--space-3);
 }
 
+.wordmarkLink {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+  transition: background-color 150ms ease, opacity 150ms ease;
+  cursor: pointer;
+}
+
+.wordmarkLink:hover {
+  background-color: var(--color-muted);
+}
+
+.wordmarkLink:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
 .wordmark {
   font-size: 0.9375rem;
   font-weight: 700;
@@ -85,6 +105,22 @@
   letter-spacing: 0.05em;
   cursor: pointer;
   border: none;
+  text-decoration: none;
+  transition: transform 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
+}
+
+.avatar:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.avatar:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.avatar:active {
+  transform: scale(0.96);
 }
 
 /* ─── Sidebar ────────────────────────────────────────────────── */
@@ -103,6 +139,11 @@
   grid-area: main;
   overflow-y: auto;
   min-width: 0;
+}
+
+/* ─── Mobile Backdrop ────────────────────────────────────────── */
+.backdrop {
+  display: none;
 }
 
 /* ─── Mobile (<768px) ────────────────────────────────────────── */
@@ -124,8 +165,31 @@
     top: 44px;
     left: 0;
     bottom: 0;
-    width: 220px;
+    width: 240px;
     z-index: 200;
     box-shadow: var(--shadow-md);
+    background-color: var(--color-card);
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    top: 44px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 199;
+    animation: fadeIn 150ms ease;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

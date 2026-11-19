@@ -22,6 +22,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import Button from '@/components/ui/Button';
 import styles from './Settings.module.css';
 
 interface SessionUser {
@@ -150,14 +151,15 @@ export default function SettingsPage() {
           </div>
 
           <div className={styles.cardFooter}>
-            <button
+            <Button
               onClick={handleSignOut}
               disabled={signingOut}
-              className={`${styles.actionButton} ${styles.actionButtonDanger}`}
+              loading={signingOut}
+              variant="destructive"
             >
               <LogOut size={14} />
               <span>{signingOut ? 'Signing Out...' : 'Sign Out of YAI Studio'}</span>
-            </button>
+            </Button>
           </div>
         </div>
       </section>
@@ -239,23 +241,23 @@ export default function SettingsPage() {
           </div>
 
           <div className={styles.cardFooter}>
-            <a
+            <Button
               href="/api/auth/github/connect"
-              className={`${styles.actionButton} ${styles.actionButtonPrimary}`}
+              variant="primary"
             >
               <RefreshCw size={14} />
               <span>Reconnect / Re-authorize GitHub</span>
-            </a>
+            </Button>
             {storageStatus?.githubLogin && (
-              <a
+              <Button
                 href={`https://github.com/${storageStatus.githubLogin}/${storageStatus.repoName || 'YVSApps_Data_YaiStudio'}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={styles.actionButton}
+                variant="outline"
               >
                 <span>View on GitHub</span>
                 <ExternalLink size={14} />
-              </a>
+              </Button>
             )}
           </div>
         </div>
@@ -285,10 +287,10 @@ export default function SettingsPage() {
           </div>
 
           <div className={styles.cardFooter}>
-            <Link href="/providers" className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
+            <Button href="/providers" variant="primary">
               <Key size={14} />
               <span>Configure AI Provider Keys</span>
-            </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -316,10 +318,10 @@ export default function SettingsPage() {
           </div>
 
           <div className={styles.cardFooter}>
-            <button onClick={toggleTheme} className={styles.actionButton}>
+            <Button onClick={toggleTheme} variant="outline">
               {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
               <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'} Theme</span>
-            </button>
+            </Button>
           </div>
         </div>
       </section>

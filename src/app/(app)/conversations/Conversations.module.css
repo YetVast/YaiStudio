@@ -1,10 +1,11 @@
 .splitLayout {
   display: flex;
-  height: calc(100vh - 49px);
+  height: calc(100dvh - 44px);
   overflow: hidden;
+  width: 100%;
 }
 
-/* ─── Sidebar ─────────────────────────────────────────── */
+/* ─── Sidebar (Conversation List) ─────────────────────── */
 .sidebar {
   width: 320px;
   border-right: 1px solid var(--color-border);
@@ -12,6 +13,7 @@
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  min-height: 0;
 }
 
 .sidebarHeader {
@@ -20,6 +22,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  background-color: var(--color-card);
 }
 
 .sidebarTitleRow {
@@ -29,7 +32,7 @@
 }
 
 .sidebarTitleRow h2 {
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
   font-weight: 700;
   margin: 0;
   color: var(--color-foreground);
@@ -68,12 +71,13 @@
 
 .searchInput {
   width: 100%;
-  padding: 6px 10px 6px 30px;
+  padding: 8px 10px 8px 32px;
   font-size: 0.8125rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background-color: var(--color-muted);
   color: var(--color-foreground);
+  box-sizing: border-box;
 }
 
 .searchInput:focus {
@@ -87,10 +91,12 @@
   padding: var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  min-height: 0;
 }
 
-.listLoading, .emptyList {
+.listLoading,
+.emptyList {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -108,18 +114,9 @@
 }
 
 @keyframes spin {
-  100% { transform: rotate(360deg); }
-}
-
-.smallActionBtn {
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background-color: var(--color-primary);
-  color: var(--color-primary-foreground);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .convItem {
@@ -132,8 +129,9 @@
   background: none;
   text-align: left;
   cursor: pointer;
-  gap: 4px;
+  gap: 5px;
   transition: background-color 0.1s ease;
+  box-sizing: border-box;
 }
 
 .convItem:hover {
@@ -145,8 +143,14 @@
   border-color: var(--color-border);
 }
 
+.convItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .convItemTitle {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-foreground);
   overflow: hidden;
@@ -164,7 +168,7 @@
 .workspacePill {
   background-color: var(--color-muted);
   color: var(--color-muted-foreground);
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 3px;
   font-weight: 500;
 }
@@ -178,13 +182,15 @@
   color: var(--color-muted-foreground);
 }
 
-/* ─── Chat Area ────────────────────────────────────────── */
+/* ─── Chat Area (Conversation View) ───────────────────── */
 .chatArea {
   flex: 1;
   display: flex;
   flex-direction: column;
   background-color: var(--color-background);
   overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
 .chatHeader {
@@ -195,18 +201,26 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.mobileBackBtn {
+  display: none;
 }
 
 .titleArea {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
 
 .titleDisplayRow {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .activeTitle {
@@ -214,6 +228,9 @@
   font-weight: 700;
   color: var(--color-foreground);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .editBtn {
@@ -222,6 +239,8 @@
   color: var(--color-muted-foreground);
   cursor: pointer;
   padding: 2px;
+  display: flex;
+  align-items: center;
 }
 
 .editBtn:hover {
@@ -232,6 +251,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .titleInput {
@@ -248,6 +268,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .modelMetaBadge {
@@ -263,13 +284,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .toggleMdBtn {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 4px 8px;
+  padding: 5px 10px;
   font-size: 0.75rem;
   font-weight: 500;
   background: var(--color-muted);
@@ -277,6 +299,7 @@
   border-radius: var(--radius-sm);
   color: var(--color-foreground);
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .toggleMdActive {
@@ -294,6 +317,7 @@
   border-bottom: 2px solid var(--color-destructive);
   color: var(--color-destructive);
   font-size: 0.8125rem;
+  flex-shrink: 0;
 }
 
 .messagesContainer {
@@ -303,9 +327,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  min-height: 0;
 }
 
-.messagesLoading, .messagesEmpty, .noConvSelected {
+.messagesLoading,
+.messagesEmpty,
+.noConvSelected {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -355,6 +382,7 @@
   font-size: 0.875rem;
   line-height: 1.5;
   box-shadow: var(--shadow-sm);
+  word-break: break-word;
 }
 
 .userWrapper .bubbleContent {
@@ -407,14 +435,30 @@
   background-color: var(--color-primary);
   animation: pulse 1s infinite alternate;
 }
-.dotPulse:nth-child(2) { animation-delay: 0.2s; }
-.dotPulse:nth-child(3) { animation-delay: 0.4s; }
+.dotPulse:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dotPulse:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
 
 .transcriptView {
   flex: 1;
   padding: var(--space-6);
   overflow-y: auto;
   background-color: var(--color-card);
+  min-height: 0;
 }
 
 .transcriptView pre {
@@ -432,6 +476,7 @@
   display: flex;
   align-items: flex-end;
   gap: var(--space-3);
+  flex-shrink: 0;
 }
 
 .messageTextarea {
@@ -444,6 +489,8 @@
   background-color: var(--color-background);
   color: var(--color-foreground);
   resize: none;
+  font-family: var(--font-sans);
+  box-sizing: border-box;
 }
 
 .messageTextarea:focus {
@@ -475,20 +522,6 @@
   cursor: not-allowed;
 }
 
-.primaryBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  background-color: var(--color-primary);
-  color: var(--color-primary-foreground);
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: var(--radius-md);
-  border: none;
-  cursor: pointer;
-}
-
 /* ─── Modal ───────────────────────────────────────────── */
 .modalOverlay {
   position: fixed;
@@ -497,7 +530,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 300;
+  padding: var(--space-4);
 }
 
 .modalCard {
@@ -532,6 +566,7 @@
   color: var(--color-foreground);
   font-size: 0.875rem;
   margin-bottom: var(--space-4);
+  box-sizing: border-box;
 }
 
 .modalInput:focus {
@@ -545,23 +580,107 @@
   gap: var(--space-2);
 }
 
-.modalCancelBtn {
-  padding: 6px 12px;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-foreground);
-  font-size: 0.8125rem;
-  cursor: pointer;
+/* ─── Responsive Breakdown (Desktop >= 768px vs Mobile < 768px) ── */
+@media (min-width: 768px) {
+  .sidebar {
+    display: flex !important;
+    width: 320px;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .chatArea {
+    display: flex !important;
+    flex: 1;
+  }
+
+  .mobileBackBtn {
+    display: none !important;
+  }
 }
 
-.modalCreateBtn {
-  padding: 6px 14px;
-  background-color: var(--color-primary);
-  color: var(--color-primary-foreground);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
+@media (max-width: 767px) {
+  .splitLayout {
+    flex-direction: column;
+    height: calc(100dvh - 44px);
+    width: 100%;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    height: 100%;
+    flex: 1;
+  }
+
+  .sidebar.mobileHidden {
+    display: none !important;
+  }
+
+  .chatArea {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+  }
+
+  .chatArea.mobileHidden {
+    display: none !important;
+  }
+
+  .mobileBackBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    margin-right: var(--space-1);
+    flex-shrink: 0;
+  }
+
+  .mobileBackBtn:hover {
+    background-color: var(--color-muted);
+  }
+
+  .mobileBackBtn:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  .chatHeader {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .activeTitle {
+    font-size: 0.9375rem;
+    max-width: 160px;
+  }
+
+  .messagesContainer {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .messageWrapper {
+    max-width: 90%;
+  }
+
+  .inputArea {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .messageTextarea {
+    font-size: 0.8125rem;
+    padding: var(--space-2);
+  }
+
+  .transcriptView {
+    padding: var(--space-3);
+  }
 }

@@ -17,16 +17,17 @@
 }
 
 .title {
-  font-size: var(--text-2xl);
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-foreground);
   margin-bottom: var(--space-2);
 }
 
 .subtitle {
-  font-size: var(--text-sm);
+  font-size: 0.875rem;
   color: var(--color-muted-foreground);
   line-height: 1.5;
+  margin: 0;
 }
 
 .section {
@@ -39,7 +40,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-lg);
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--color-foreground);
 }
@@ -49,7 +50,7 @@
 }
 
 .card {
-  background: var(--color-surface);
+  background: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
@@ -63,8 +64,8 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border-subtle);
-  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
 }
 
 .cardRow:last-child {
@@ -87,11 +88,11 @@
 
 .mono {
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  background: var(--color-surface-subtle);
+  font-size: 0.75rem;
+  background: var(--color-muted);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border);
 }
 
 .badgeSuccess {
@@ -99,12 +100,12 @@
   align-items: center;
   gap: var(--space-1);
   padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(34, 197, 94, 0.12);
-  color: #16a34a;
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: var(--color-muted);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
 }
 
 .badgeWarning {
@@ -112,12 +113,12 @@
   align-items: center;
   gap: var(--space-1);
   padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(234, 179, 8, 0.12);
-  color: #ca8a04;
-  border: 1px solid rgba(234, 179, 8, 0.25);
+  background: var(--color-muted);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
 }
 
 .badgeError {
@@ -125,22 +126,22 @@
   align-items: center;
   gap: var(--space-1);
   padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: var(--color-muted);
+  color: var(--color-destructive);
+  border: 1px solid var(--color-destructive);
 }
 
 .infoBox {
   display: flex;
   gap: var(--space-3);
   padding: var(--space-4);
-  background: var(--color-surface-subtle);
+  background: var(--color-muted);
   border-radius: var(--radius-md);
   border-left: 3px solid var(--color-primary);
-  font-size: var(--text-xs);
+  font-size: 0.75rem;
   color: var(--color-muted-foreground);
   line-height: 1.5;
 }
@@ -151,46 +152,14 @@
   margin-bottom: var(--space-1);
 }
 
-.actionButton {
-  display: inline-flex;
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: var(--color-surface-subtle);
-  color: var(--color-foreground);
-  border: 1px solid var(--color-border);
-}
-
-.actionButton:hover {
-  background: var(--color-border-subtle);
-  border-color: var(--color-border);
-}
-
-.actionButtonPrimary {
-  background: var(--color-primary);
-  color: #ffffff;
-  border: 1px solid var(--color-primary);
-}
-
-.actionButtonPrimary:hover {
-  filter: brightness(1.1);
-}
-
-.actionButtonDanger {
-  background: transparent;
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.actionButtonDanger:hover {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: #dc2626;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
 }
 
 .gridTwoCol {
@@ -203,12 +172,4 @@
   .gridTwoCol {
     grid-template-columns: 1fr;
   }
-}
-
-.cardFooter {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border-subtle);
 }

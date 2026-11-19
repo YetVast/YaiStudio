@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, Clock, Cpu, Filter, RefreshCw, AlertCircle, Sparkles } from 'lucide-react';
 import type { ActivityEvent } from '@/types/personal-intelligence';
+import Button from '@/components/ui/Button';
 import styles from './Activity.module.css';
 
 export default function ActivityPage() {
@@ -49,10 +50,10 @@ export default function ActivityPage() {
             products. Activity records are distinct from durable personal memories.
           </p>
         </div>
-        <button onClick={fetchActivity} className={styles.refreshBtn}>
+        <Button onClick={fetchActivity} variant="outline" size="sm" loading={loading}>
           <RefreshCw size={14} />
           <span>Refresh</span>
-        </button>
+        </Button>
       </div>
 
       {errorMessage && (

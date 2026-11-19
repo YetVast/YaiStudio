@@ -35,17 +35,20 @@ function NavItem({
   label,
   icon: Icon,
   active,
+  onClick,
 }: {
   href: string;
   label: string;
   icon: React.ElementType;
   active: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Link
       href={href}
       className={`${styles.navItem}${active ? ` ${styles.active}` : ''}`}
       aria-current={active ? 'page' : undefined}
+      onClick={onClick}
     >
       <span className={styles.navIcon} aria-hidden="true">
         <Icon size={15} strokeWidth={active ? 2.5 : 1.75} />
@@ -55,7 +58,7 @@ function NavItem({
   );
 }
 
-export default function AppNav() {
+export default function AppNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   const isActive = (href: string) =>
@@ -69,6 +72,7 @@ export default function AppNav() {
             key={item.href}
             {...item}
             active={isActive(item.href)}
+            onClick={onNavigate}
           />
         ))}
       </div>
@@ -84,6 +88,7 @@ export default function AppNav() {
             key={item.href}
             {...item}
             active={isActive(item.href)}
+            onClick={onNavigate}
           />
         ))}
       </div>

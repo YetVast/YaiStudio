@@ -14,7 +14,9 @@ import {
   FileText,
   AlertCircle,
   RefreshCw,
+  ArrowLeft,
 } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import { StatusBadge, type SyncStatus } from '@/components/ui/StatusBadge';
 import { formatMarkdown } from '@/lib/client/safe-markdown';
 import type { ConversationIndexEntry, Message, ConversationMeta } from '@/types/personal-intelligence';
@@ -28,6 +30,9 @@ export default function ConversationsPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [markdownTranscript, setMarkdownTranscript] = useState<string | null>(null);
   const [showMarkdown, setShowMarkdown] = useState(false);
+
+  // Mobile view state: when true on mobile, shows conversation view; when false, shows list
+  const [showMobileChat, setShowMobileChat] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [inputMessage, setInputMessage] = useState('');
@@ -60,7 +65,7 @@ export default function ConversationsPage() {
         const data = await res.json();
         setConversations(data.conversations || []);
         if (data.conversations?.length > 0 && !activeId) {
-          selectConversation(data.conversations[0].id);
+          selectConversation(data.conversations[0].id, false);
         }
       }
     } catch {
@@ -79,8 +84,11 @@ export default function ConversationsPage() {
   }, [messages, generating]);
 
   // 2. Select and load conversation
-  const selectConversation = async (id: string) => {
+  const selectConversation = async (id: string, isUserAction = false) => {
     setActiveId(id);
+    if (isUserAction) {
+      setShowMobileChat(true);
+    }
     setLoadingConversation(true);
     setErrorMessage(null);
     setShowMarkdown(false);
@@ -118,7 +126,8 @@ export default function ConversationsPage() {
         setShowNewModal(false);
         setNewTitle('');
         await fetchConversations();
-        selectConversation(created.id);
+        selectConversation(created.id, true);
+        setShowMobileChat(true);
       } else {
         const err = await res.json();
         throw new Error(err.error || 'Failed to create conversation');
@@ -150,52 +159,63 @@ export default function ConversationsPage() {
     }
   };
 
-  // 5. Send message & generate answer
+  // 5. Send message & generate response
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || !activeId || generating) return;
 
     const userText = inputMessage.trim();
     setInputMessage('');
-    setGenerating(true);
-    setSyncStatus('saving');
     setErrorMessage(null);
 
-    // Optimistically add user message
+    // Optimistic user message
     const tempUserMsg: Message = {
-      id: `temp-${Date.now()}`,
+      id: `msg_user_${Date.now()}`,
       sequence: messages.length + 1,
       role: 'user',
       content: userText,
       createdAt: new Date().toISOString(),
     };
+
     setMessages((prev) => [...prev, tempUserMsg]);
+    setSyncStatus('saving');
+    setGenerating(true);
 
     try {
-      const res = await fetch('/api/yai/generate', {
+      // Step A: Append User Message to conversation
+      const msgRes = await fetch(`/api/conversations/${activeId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: 'user',
+          content: userText,
+        }),
+      });
+
+      if (!msgRes.ok) {
+        throw new Error('Failed to persist user message to repository');
+      }
+
+      // Step B: Call YAI Generation
+      const genRes = await fetch('/api/yai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId: activeId,
-          message: userText,
+          prompt: userText,
         }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Generation failed');
+      const genData = await genRes.json();
+      if (!genRes.ok) {
+        throw new Error(
+          genData.error || 'Failed to generate response. Check AI Provider configuration.',
+        );
       }
 
-      // Refresh full conversation from storage to get canonical messages and SHAs
-      const refreshRes = await fetch(`/api/conversations/${activeId}`);
-      if (refreshRes.ok) {
-        const refreshed = await refreshRes.json();
-        setActiveMeta(refreshed.meta);
-        setMetaSha(refreshed.metaSha);
-        setMessages(refreshed.messages || []);
-        setMarkdownTranscript(refreshed.markdown || null);
-      }
+      // Update state with assistant response
+      setMessages((prev) => [...prev, genData.assistantMessage]);
+      setMarkdownTranscript(genData.updatedMarkdown);
       setSyncStatus('saved');
     } catch (err) {
       setSyncStatus('error');
@@ -213,21 +233,28 @@ export default function ConversationsPage() {
     c.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  const isChatActiveOnMobile = showMobileChat && !!activeId;
+
   return (
     <div className={styles.splitLayout}>
       {/* ── Left Panel: Conversation List ── */}
-      <aside className={styles.sidebar}>
+      <aside
+        className={`${styles.sidebar} ${isChatActiveOnMobile ? styles.mobileHidden : ''}`}
+        aria-label="Conversation list"
+      >
         <div className={styles.sidebarHeader}>
           <div className={styles.sidebarTitleRow}>
             <h2>Conversations</h2>
-            <button
+            <Button
               onClick={() => setShowNewModal(true)}
-              className={styles.iconBtn}
+              variant="primary"
+              size="sm"
               title="New Conversation"
               aria-label="New Conversation"
             >
-              <Plus size={16} />
-            </button>
+              <Plus size={14} />
+              <span>New</span>
+            </Button>
           </div>
 
           <div className={styles.searchWrapper}>
@@ -251,18 +278,19 @@ export default function ConversationsPage() {
           ) : filteredConversations.length === 0 ? (
             <div className={styles.emptyList}>
               <p>No conversations found</p>
-              <button
+              <Button
                 onClick={() => setShowNewModal(true)}
-                className={styles.smallActionBtn}
+                variant="secondary"
+                size="sm"
               >
                 Start new
-              </button>
+              </Button>
             </div>
           ) : (
             filteredConversations.map((c) => (
               <button
                 key={c.id}
-                onClick={() => selectConversation(c.id)}
+                onClick={() => selectConversation(c.id, true)}
                 className={`${styles.convItem} ${c.id === activeId ? styles.activeConvItem : ''}`}
               >
                 <div className={styles.convItemRow}>
@@ -285,11 +313,25 @@ export default function ConversationsPage() {
       </aside>
 
       {/* ── Right Panel: Active Conversation View ── */}
-      <section className={styles.chatArea}>
+      <section
+        className={`${styles.chatArea} ${!isChatActiveOnMobile ? styles.mobileHidden : ''}`}
+        aria-label="Conversation content"
+      >
         {activeId && activeMeta ? (
           <>
             {/* Conversation Header */}
             <div className={styles.chatHeader}>
+              {/* Requirement 3: Mobile Back to Conversations button */}
+              <button
+                type="button"
+                onClick={() => setShowMobileChat(false)}
+                className={styles.mobileBackBtn}
+                aria-label="Back to conversations"
+              >
+                <ArrowLeft size={16} />
+                <span>Conversations</span>
+              </button>
+
               <div className={styles.titleArea}>
                 {isEditingTitle ? (
                   <div className={styles.titleEditRow}>
@@ -445,10 +487,10 @@ export default function ConversationsPage() {
             <MessageSquare size={48} className={styles.emptyIcon} />
             <h2>No Conversation Selected</h2>
             <p>Select a conversation from the left or create a new one.</p>
-            <button onClick={() => setShowNewModal(true)} className={styles.primaryBtn}>
+            <Button onClick={() => setShowNewModal(true)} variant="primary">
               <Plus size={16} />
               <span>New Conversation</span>
-            </button>
+            </Button>
           </div>
         )}
       </section>
@@ -468,12 +510,12 @@ export default function ConversationsPage() {
               autoFocus
             />
             <div className={styles.modalActions}>
-              <button onClick={() => setShowNewModal(false)} className={styles.modalCancelBtn}>
+              <Button onClick={() => setShowNewModal(false)} variant="outline">
                 Cancel
-              </button>
-              <button onClick={handleCreate} className={styles.modalCreateBtn}>
+              </Button>
+              <Button onClick={handleCreate} variant="primary">
                 Create
-              </button>
+              </Button>
             </div>
           </div>
         </div>

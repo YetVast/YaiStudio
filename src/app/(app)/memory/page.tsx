@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import type { MemoryRecord, MemoryCandidate, MemoryType } from '@/types/personal-intelligence';
+import Button from '@/components/ui/Button';
 import styles from './Memory.module.css';
 
 const CATEGORIES: { id: MemoryType; label: string; desc: string }[] = [
@@ -146,10 +147,10 @@ export default function MemoryPage() {
           </p>
         </div>
         {activeTab !== 'candidates' && (
-          <button onClick={() => setShowAddModal(true)} className={styles.primaryBtn}>
+          <Button onClick={() => setShowAddModal(true)} variant="primary">
             <Plus size={16} />
             <span>Add {activeTab}</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -274,10 +275,10 @@ export default function MemoryPage() {
               <Brain size={36} className={styles.emptyIcon} />
               <h3>No {activeTab}s recorded yet</h3>
               <p>Add your first entry or approve candidates to build your personal intelligence.</p>
-              <button onClick={() => setShowAddModal(true)} className={styles.smallActionBtn}>
+              <Button onClick={() => setShowAddModal(true)} variant="secondary" size="sm">
                 <Plus size={14} />
                 <span>Add {activeTab}</span>
-              </button>
+              </Button>
             </div>
           ) : (
             <div className={styles.recordGrid}>
@@ -328,16 +329,21 @@ export default function MemoryPage() {
               className={styles.modalInput}
             />
             <div className={styles.modalActions}>
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className={styles.modalCancelBtn}
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button type="submit" disabled={saving} className={styles.modalSubmitBtn}>
+              </Button>
+              <Button
+                type="submit"
+                disabled={saving}
+                loading={saving}
+                variant="primary"
+              >
                 {saving ? 'Saving...' : 'Save to Repository'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

@@ -14,6 +14,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import type { ProviderKeyStatus } from '@/lib/providers/key-store';
+import Button from '@/components/ui/Button';
 import styles from './Providers.module.css';
 
 export default function ProvidersPage() {
@@ -186,12 +187,13 @@ export default function ProvidersPage() {
                     <code className={styles.maskedKey}>{openRouterStatus.maskedKey}</code>
                   </div>
                   <div className={styles.keyBtnGroup}>
-                    <button
+                    <Button
                       onClick={() => setActiveProvider('openrouter')}
-                      className={styles.smallActionBtn}
+                      variant="outline"
+                      size="sm"
                     >
                       Replace
-                    </button>
+                    </Button>
                     <button
                       onClick={() => handleDeleteKey('openrouter')}
                       className={styles.deleteBtn}
@@ -205,13 +207,14 @@ export default function ProvidersPage() {
               ) : (
                 <div className={styles.unconfiguredBox}>
                   <p>No key configured. Add your OpenRouter API key to enable conversation generation.</p>
-                  <button
+                  <Button
                     onClick={() => setActiveProvider('openrouter')}
-                    className={styles.addKeyBtn}
+                    variant="primary"
+                    size="sm"
                   >
                     <Key size={14} />
                     <span>Add OpenRouter Key</span>
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -264,12 +267,13 @@ export default function ProvidersPage() {
                     <code className={styles.maskedKey}>{googleAiStatus.maskedKey}</code>
                   </div>
                   <div className={styles.keyBtnGroup}>
-                    <button
+                    <Button
                       onClick={() => setActiveProvider('google-ai')}
-                      className={styles.smallActionBtn}
+                      variant="outline"
+                      size="sm"
                     >
                       Replace
-                    </button>
+                    </Button>
                     <button
                       onClick={() => handleDeleteKey('google-ai')}
                       className={styles.deleteBtn}
@@ -283,13 +287,14 @@ export default function ProvidersPage() {
               ) : (
                 <div className={styles.unconfiguredBox}>
                   <p>Optional secondary provider for direct Gemini model queries.</p>
-                  <button
+                  <Button
                     onClick={() => setActiveProvider('google-ai')}
-                    className={styles.addKeyBtn}
+                    variant="primary"
+                    size="sm"
                   >
                     <Key size={14} />
                     <span>Add Google AI Key</span>
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -340,19 +345,24 @@ export default function ProvidersPage() {
             </div>
 
             <div className={styles.modalActions}>
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setActiveProvider(null);
                   setEnteredKey('');
                 }}
-                className={styles.modalCancelBtn}
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button type="submit" disabled={savingKey} className={styles.modalSubmitBtn}>
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingKey}
+                loading={savingKey}
+                variant="primary"
+              >
                 {savingKey ? 'Verifying...' : 'Validate & Save Key'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
