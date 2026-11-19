@@ -17,6 +17,10 @@ import {
   ArrowLeft,
   Shield,
   Cloud,
+  Info,
+  Copy,
+  Calendar,
+  Folder,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { StatusBadge, type SyncStatus } from '@/components/ui/StatusBadge';
@@ -76,6 +80,48 @@ export default function ConversationsPage() {
   // Title edit state
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+
+  // Conversation Info Sidebar state
+  const [showInfoSidebar, setShowInfoSidebar] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+
+  const handleCopyId = (id: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(id).then(() => {
+        setCopiedId(true);
+        setTimeout(() => setCopiedId(false), 2000);
+      });
+    }
+  };
+
+  const formatFullDateTime = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Not available';
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return dateString;
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(d);
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Close info sidebar on Escape key
+  useEffect(() => {
+    if (!showInfoSidebar) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowInfoSidebar(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showInfoSidebar]);
 
   // New conversation modal state
   const [showNewModal, setShowNewModal] = useState(false);
@@ -620,102 +666,252 @@ export default function ConversationsPage() {
                   <FileText size={14} />
                   <span>Transcript</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowInfoSidebar((prev) => !prev)}
+                  className={`${styles.infoToggleBtn} ${showInfoSidebar ? styles.infoToggleBtnActive : ''}`}
+                  title={showInfoSidebar ? 'Hide conversation details' : 'Show conversation details'}
+                  aria-label={showInfoSidebar ? 'Hide conversation details' : 'Show conversation details'}
+                  aria-expanded={showInfoSidebar}
+                >
+                  <Info size={14} />
+                  <span className={styles.infoBtnText}>Details</span>
+                </button>
               </div>
             </div>
 
-            {/* Error Banner */}
-            {errorMessage && (
-              <div className={styles.errorBanner} role="alert">
-                <AlertCircle size={14} />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            {/* Content view (Chat vs Transcript) */}
-            {showMarkdown ? (
-              <div className={styles.transcriptView}>
-                <pre>{markdownTranscript || 'No transcript generated yet.'}</pre>
-              </div>
-            ) : (
-              <div className={styles.messagesContainer}>
-                {loadingConversation ? (
-                  <div className={styles.messagesLoading}>
-                    <RefreshCw className={styles.spinner} size={20} />
-                    <span>Loading conversation...</span>
+            <div className={styles.chatBody}>
+              <div className={styles.chatMainColumn}>
+                {/* Error Banner */}
+                {errorMessage && (
+                  <div className={styles.errorBanner} role="alert">
+                    <AlertCircle size={14} />
+                    <span>{errorMessage}</span>
                   </div>
-                ) : messages.length === 0 ? (
-                  <div className={styles.messagesEmpty}>
-                    <MessageSquare size={36} className={styles.emptyIcon} />
-                    <h3>This conversation is empty</h3>
-                    <p>Send a message below to begin.</p>
+                )}
+
+                {/* Content view (Chat vs Transcript) */}
+                {showMarkdown ? (
+                  <div className={styles.transcriptView}>
+                    <pre>{markdownTranscript || 'No transcript generated yet.'}</pre>
                   </div>
                 ) : (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`${styles.messageWrapper} ${
-                        msg.role === 'user' ? styles.userWrapper : styles.assistantWrapper
-                      }`}
-                    >
-                      <div className={styles.bubbleHeader}>
-                        <span className={styles.senderName}>
-                          {msg.role === 'user' ? 'You' : 'YAI Assistant'}
-                        </span>
-                        <span className={styles.timestamp}>
-                          {new Date(msg.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                  <div className={styles.messagesContainer}>
+                    {loadingConversation ? (
+                      <div className={styles.messagesLoading}>
+                        <RefreshCw className={styles.spinner} size={20} />
+                        <span>Loading conversation...</span>
                       </div>
-                      <div
-                        className={styles.bubbleContent}
-                        dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }}
-                      />
-                    </div>
-                  ))
-                )}
-                {generating && (
-                  <div className={`${styles.messageWrapper} ${styles.assistantWrapper}`}>
-                    <div className={styles.bubbleHeader}>
-                      <span className={styles.senderName}>YAI Assistant</span>
-                    </div>
-                    <div className={styles.generatingIndicator}>
-                      <span className={styles.dotPulse} />
-                      <span className={styles.dotPulse} />
-                      <span className={styles.dotPulse} />
-                    </div>
+                    ) : messages.length === 0 ? (
+                      <div className={styles.messagesEmpty}>
+                        <MessageSquare size={36} className={styles.emptyIcon} />
+                        <h3>This conversation is empty</h3>
+                        <p>Send a message below to begin.</p>
+                      </div>
+                    ) : (
+                      messages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`${styles.messageWrapper} ${
+                            msg.role === 'user' ? styles.userWrapper : styles.assistantWrapper
+                          }`}
+                        >
+                          <div className={styles.bubbleHeader}>
+                            <span className={styles.senderName}>
+                              {msg.role === 'user' ? 'You' : 'YAI Assistant'}
+                            </span>
+                            <span className={styles.timestamp}>
+                              {new Date(msg.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                          <div
+                            className={styles.bubbleContent}
+                            dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }}
+                          />
+                        </div>
+                      ))
+                    )}
+                    {generating && (
+                      <div className={`${styles.messageWrapper} ${styles.assistantWrapper}`}>
+                        <div className={styles.bubbleHeader}>
+                          <span className={styles.senderName}>YAI Assistant</span>
+                        </div>
+                        <div className={styles.generatingIndicator}>
+                          <span className={styles.dotPulse} />
+                          <span className={styles.dotPulse} />
+                          <span className={styles.dotPulse} />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
                 )}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
 
-            {/* Input Form */}
-            <form onSubmit={handleSendMessage} className={styles.inputArea}>
-              <textarea
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(e);
-                  }
-                }}
-                placeholder="Ask YAI or add to your personal context... (Enter to send, Shift+Enter for newline)"
-                className={styles.messageTextarea}
-                rows={2}
-                disabled={generating}
-              />
-              <button
-                type="submit"
-                disabled={generating || !inputMessage.trim()}
-                className={styles.sendButton}
-                aria-label="Send message"
-              >
-                <Send size={16} />
-              </button>
-            </form>
+                {/* Input Form */}
+                <form onSubmit={handleSendMessage} className={styles.inputArea}>
+                  <textarea
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
+                      }
+                    }}
+                    placeholder="Ask YAI or add to your personal context... (Enter to send, Shift+Enter for newline)"
+                    className={styles.messageTextarea}
+                    rows={2}
+                    disabled={generating}
+                  />
+                  <button
+                    type="submit"
+                    disabled={generating || !inputMessage.trim()}
+                    className={styles.sendButton}
+                    aria-label="Send message"
+                  >
+                    <Send size={16} />
+                  </button>
+                </form>
+              </div>
+
+              {/* ── Conversation Information Sidebar ── */}
+              {showInfoSidebar && (
+                <>
+                  <div
+                    className={styles.infoBackdrop}
+                    onClick={() => setShowInfoSidebar(false)}
+                    aria-hidden="true"
+                  />
+                  <aside
+                    className={styles.infoSidebar}
+                    aria-label="Conversation details"
+                  >
+                    <div className={styles.infoHeader}>
+                      <div className={styles.infoHeaderTitle}>
+                        <Info size={15} />
+                        <span>Conversation Details</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowInfoSidebar(false)}
+                        className={styles.infoCloseBtn}
+                        aria-label="Close conversation details"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+
+                    <div className={styles.infoContent}>
+                      {/* Topic & ID */}
+                      <div className={styles.infoSection}>
+                        <span className={styles.infoSectionLabel}>Conversation</span>
+                        <h3 className={styles.infoTitleText}>{activeMeta.title}</h3>
+                        <div className={styles.idRow}>
+                          <code className={styles.idCode} title={activeMeta.id}>
+                            {activeMeta.id}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyId(activeMeta.id)}
+                            className={styles.copyIdBtn}
+                            title="Copy conversation ID"
+                            aria-label="Copy conversation ID"
+                          >
+                            {copiedId ? <Check size={12} /> : <Copy size={12} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Status & Sync */}
+                      <div className={styles.infoSection}>
+                        <span className={styles.infoSectionLabel}>Lifecycle & Synchronization</span>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Status</span>
+                          <span className={styles.statusActivePill}>
+                            <span className={styles.activeDot} />
+                            {activeMeta.status === 'active' ? 'Active' : 'Archived'}
+                          </span>
+                        </div>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Cloud Sync</span>
+                          <StatusBadge status={syncStatus} />
+                        </div>
+                        <p className={styles.syncDescription}>
+                          {syncStatus === 'saved'
+                            ? 'Encrypted and synchronized with your private GitHub repository.'
+                            : syncStatus === 'saving'
+                            ? 'Synchronizing local changes with GitHub repository...'
+                            : syncStatus === 'pending'
+                            ? 'Changes pending synchronization with GitHub repository.'
+                            : 'Synchronization failed — pending retry.'}
+                        </p>
+                      </div>
+
+                      {/* Metrics & Dates */}
+                      <div className={styles.infoSection}>
+                        <span className={styles.infoSectionLabel}>Metrics & Timestamps</span>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Total Messages</span>
+                          <span className={styles.infoFieldValue}>{messages.length}</span>
+                        </div>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Created</span>
+                          <span className={styles.infoFieldValue}>{formatFullDateTime(activeMeta.createdAt)}</span>
+                        </div>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Last Updated</span>
+                          <span className={styles.infoFieldValue}>{formatFullDateTime(activeMeta.updatedAt)}</span>
+                        </div>
+                      </div>
+
+                      {/* Workspace & Context */}
+                      <div className={styles.infoSection}>
+                        <span className={styles.infoSectionLabel}>Workspace Association</span>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Workspace</span>
+                          <span className={styles.workspaceValue}>
+                            {activeMeta.workspacePath
+                              ? activeMeta.workspacePath
+                              : conversations.find((c) => c.id === activeId)?.workspaceName || 'Unfiled (Personal)'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* AI Provider & Runtime */}
+                      <div className={styles.infoSection}>
+                        <span className={styles.infoSectionLabel}>Inference & Runtime</span>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Execution Mode</span>
+                          <span className={styles.infoFieldValue}>
+                            {inferenceMode === 'local'
+                              ? 'Local Only (Zero Egress)'
+                              : inferenceMode === 'auto'
+                              ? 'Automatic (Hybrid)'
+                              : 'Cloud Only (BYOK)'}
+                          </span>
+                        </div>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Provider</span>
+                          <span className={styles.infoFieldValue}>
+                            {inferenceMode === 'local' ? 'LiteRT-LM (On-Device)' : (activeMeta.provider || 'Vaulted Cloud')}
+                          </span>
+                        </div>
+                        <div className={styles.infoMetaRow}>
+                          <span className={styles.infoFieldLabel}>Model</span>
+                          <span className={styles.infoFieldValue}>
+                            {inferenceMode === 'local' ? 'Gemma 2B (int4)' : (activeMeta.model || 'Default')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+                </>
+              )}
+            </div>
           </>
         ) : (
           <div className={styles.noConvSelected}>

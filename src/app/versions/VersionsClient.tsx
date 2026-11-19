@@ -14,14 +14,10 @@ import {
   Check,
   FileCode,
   ShieldCheck,
-  Moon,
-  Sun,
   Layers,
   Sparkles,
-  ArrowRight,
   ExternalLink,
 } from 'lucide-react';
-import { useTheme } from '@/components/providers/ThemeProvider';
 import type {
   ApplicationVersionEntry,
   ChangeType,
@@ -34,8 +30,6 @@ interface VersionsClientProps {
 }
 
 export default function VersionsClient({ manifest }: VersionsClientProps) {
-  const { theme, toggleTheme } = useTheme();
-
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -156,34 +150,6 @@ export default function VersionsClient({ manifest }: VersionsClientProps) {
 
   return (
     <div className={styles.pageRoot}>
-      {/* ── Top Header Navigation ── */}
-      <header className={styles.topNav}>
-        <div className={styles.topNavInner}>
-          <Link href="/" className={styles.brandGroup} title="YAI Studio">
-            <span className={styles.brandWordmark}>
-              <span className={styles.brandAccent}>YAI</span> Studio
-            </span>
-            <span className={styles.navBadge}>/versions</span>
-          </Link>
-
-          <div className={styles.navActions}>
-            <button
-              className={styles.iconBtn}
-              onClick={toggleTheme}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-
-            <Link href="/" className={styles.appLink}>
-              <span>Launch Studio</span>
-              <ArrowRight size={14} />
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* ── Hero / Overview Section ── */}
       <section className={styles.heroSection}>
         <div className={styles.heroContent}>

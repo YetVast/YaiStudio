@@ -3,16 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Moon, Sun, Menu, WifiOff, RefreshCw, Download } from 'lucide-react';
+import { Moon, Sun, Menu } from 'lucide-react';
 import { ThemeProvider, useTheme } from '@/components/providers/ThemeProvider';
-import { usePWA } from '@/lib/pwa/pwa-context';
 import AppNav from '@/components/navigation/AppNav';
-import manifest from '@/generated/version-history.json';
 import styles from './AppShell.module.css';
 
 function ShellInner({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
-  const { isOnline, isInstallable, isUpdateAvailable, promptInstall, applyUpdate } = usePWA();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -37,7 +34,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={styles.shell}>
-      {/* ─── Header ─────────────────────────── */}
+      {/* ─── Header: Exactly 4 elements (Sidebar toggle, Logo, Theme toggle, Avatar) ── */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <button
@@ -48,74 +45,26 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           >
             <Menu size={16} />
           </button>
-          {/* Requirement 5: YAI Studio title is an accessible About action */}
           <Link
-            href="/about"
+            href="/"
             className={styles.wordmarkLink}
-            aria-label="About YAI Studio"
-            title="About YAI Studio"
+            aria-label="YAI Studio"
+            title="YAI Studio"
           >
             <span className={styles.wordmark}>
               <span className={styles.wordmarkAccent}>YAI</span> Studio
             </span>
           </Link>
-          <Link
-            href="/versions"
-            className={styles.versionBadge}
-            aria-label={`YAI Studio version ${manifest.currentVersion || 'v0.8'}`}
-            title={`Version ${manifest.currentVersion || 'v0.8'} — View Version History`}
-          >
-            {manifest.currentVersion || 'v0.8'}
-          </Link>
         </div>
         <div className={styles.headerRight}>
-          {/* Connectivity Status Indicator */}
-          {!isOnline && (
-            <div
-              className={styles.offlinePill}
-              role="status"
-              title="You are currently offline. Operating in local mode."
-              aria-label="Offline — Local Mode"
-            >
-              <WifiOff size={13} aria-hidden="true" />
-              <span>Offline</span>
-            </div>
-          )}
-
-          {/* Update Available Notification */}
-          {isUpdateAvailable && (
-            <button
-              className={styles.updatePill}
-              onClick={applyUpdate}
-              title="A new version of YAI Studio is ready. Click to reload and update."
-              aria-label="Update available. Click to reload."
-            >
-              <RefreshCw size={13} aria-hidden="true" />
-              <span>Update Ready</span>
-            </button>
-          )}
-
-          {/* Install PWA Prompt */}
-          {isInstallable && (
-            <button
-              className={styles.installButton}
-              onClick={promptInstall}
-              title="Install YAI Studio as an application on your device"
-              aria-label="Install YAI Studio application"
-            >
-              <Download size={13} aria-hidden="true" />
-              <span>Install</span>
-            </button>
-          )}
-
           <button
             className={styles.iconButton}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
             onClick={toggleTheme}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
           >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-          {/* Requirement 6: Profile avatar navigates to Personal Intelligence Overview */}
           <Link
             href="/"
             className={styles.avatar}

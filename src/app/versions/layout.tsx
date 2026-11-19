@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import AppShell from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
   title: 'Version History',
@@ -11,5 +11,5 @@ export default function VersionsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return <AppShell>{children}</AppShell>;
 }

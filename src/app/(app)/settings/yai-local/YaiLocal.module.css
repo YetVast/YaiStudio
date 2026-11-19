@@ -66,11 +66,212 @@
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  padding: 0;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.collapsibleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  background-color: var(--color-card);
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 150ms ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.collapsibleHeader:hover {
+  background-color: var(--color-muted);
+}
+
+.collapsibleHeader:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+
+.collapsibleTitleGroup {
+  display: flex;
+  align-items: center;
   gap: var(--space-4);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.headerSummaryPills {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.summaryDot {
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+}
+
+.summaryText {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+.chevronBtn {
+  background: none;
+  border: none;
+  color: var(--color-muted-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.sectionBody {
+  padding: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  background-color: var(--color-card);
+  animation: fadeIn 150ms ease;
+}
+
+.sectionSubHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.actionBanner {
+  background-color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.bannerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.bannerDesc {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: var(--space-1) 0 0;
+  line-height: 1.4;
+}
+
+.bannerNotice {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.storageBarContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.storageBarHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+}
+
+.stepInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepSubtext {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  font-weight: normal;
+}
+
+.continueSetupCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-secondary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.continueSetupText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8125rem;
+  color: var(--color-foreground);
+}
+
+.modelBadgeStatus {
+  flex-shrink: 0;
+}
+
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background-color: rgba(198, 40, 40, 0.12);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--color-destructive);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.badgePrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sectionHeader {
@@ -553,4 +754,79 @@
   font-size: 0.8125rem;
   line-height: 1.5;
   color: var(--color-foreground);
+}
+
+@media (max-width: 768px) {
+  .root {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+
+  .collapsibleHeader {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .sectionTitle {
+    font-size: 0.9375rem;
+  }
+
+  .sectionBody {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+
+  .title {
+    font-size: 1.375rem;
+  }
+
+  .modelSpecs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .modeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .diagItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .diagValue {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .root {
+    padding: var(--space-3);
+  }
+
+  .collapsibleHeader {
+    padding: var(--space-3);
+  }
+
+  .collapsibleTitleGroup {
+    gap: var(--space-2);
+  }
+
+  .modelSpecs {
+    grid-template-columns: 1fr;
+  }
+
+  .metricsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stepRow {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+
+  .stepStatus {
+    align-self: flex-start;
+  }
 }

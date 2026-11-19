@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-19T11:15:47.565Z",
-  "currentVersion": "v0.8",
+  "generatedAt": "2026-11-19T16:17:40.179Z",
+  "currentVersion": "v0.12",
   "currentMajor": 0,
-  "totalVersions": 8,
+  "totalVersions": 12,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -24,9 +24,152 @@
   ],
   "versions": [
     {
-      "version": "v0.8",
+      "version": "v0.12",
       "major": 0,
-      "sequence": 8,
+      "sequence": 12,
+      "commitHash": "47fe1ec9360b6da4d65c0782a4a9c5df466b57b9",
+      "shortCommitHash": "47fe1ec",
+      "subject": "Merge pull request #2 from YetVast/feature/v1-pwa-litert",
+      "description": "Feature/v1 pwa litert",
+      "hasExtendedDescription": true,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T16:56:48+05:30",
+      "committedAt": "2026-11-19T16:56:48+05:30",
+      "changeType": [
+        "feature"
+      ],
+      "changedFiles": [],
+      "fileStats": [],
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.11",
+      "major": 0,
+      "sequence": 11,
+      "commitHash": "3c3987fe9982fb03d669f385773b2b2db7098c35",
+      "shortCommitHash": "3c3987f",
+      "subject": "Merge pull request #1 from YetVast/main",
+      "description": "docs: record YAI Studio V0 release freeze and V1 handoff report",
+      "hasExtendedDescription": true,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T16:55:54+05:30",
+      "committedAt": "2026-11-19T16:55:54+05:30",
+      "changeType": [
+        "maintenance"
+      ],
+      "changedFiles": [],
+      "fileStats": [],
+      "filesChanged": 0,
+      "insertions": 0,
+      "deletions": 0,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.10",
+      "major": 0,
+      "sequence": 10,
+      "commitHash": "bbf4758a15a6ac912b4fe1d7d38ccdbe3b9b7129",
+      "shortCommitHash": "bbf4758",
+      "subject": "versions button",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T16:53:33+05:30",
+      "committedAt": "2026-11-19T16:53:33+05:30",
+      "changeType": [
+        "ui"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-fix-versions-404-navbar-integration.md",
+        "src/app/(public)/versions/Versions.module.css",
+        "src/app/(public)/versions/VersionsClient.tsx",
+        "src/app/(public)/versions/layout.tsx",
+        "src/app/(public)/versions/page.tsx",
+        "src/app/versions/Versions.module.css",
+        "src/app/versions/VersionsClient.tsx",
+        "src/app/versions/layout.tsx",
+        "src/app/versions/page.tsx",
+        "src/components/layout/AppShell.module.css",
+        "src/components/layout/AppShell.tsx",
+        "src/generated/version-history.json"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-fix-versions-404-navbar-integration.md",
+          "insertions": 152,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/versions/Versions.module.css",
+          "insertions": 0,
+          "deletions": 714
+        },
+        {
+          "path": "src/app/(public)/versions/VersionsClient.tsx",
+          "insertions": 0,
+          "deletions": 552
+        },
+        {
+          "path": "src/app/(public)/versions/layout.tsx",
+          "insertions": 0,
+          "deletions": 15
+        },
+        {
+          "path": "src/app/(public)/versions/page.tsx",
+          "insertions": 0,
+          "deletions": 11
+        },
+        {
+          "path": "src/app/versions/Versions.module.css",
+          "insertions": 714,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/versions/VersionsClient.tsx",
+          "insertions": 552,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/versions/layout.tsx",
+          "insertions": 15,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/versions/page.tsx",
+          "insertions": 11,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/layout/AppShell.module.css",
+          "insertions": 35,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "insertions": 9,
+          "deletions": 0
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 126,
+          "deletions": 3
+        }
+      ],
+      "filesChanged": 12,
+      "insertions": 1614,
+      "deletions": 1295,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.9",
+      "major": 0,
+      "sequence": 9,
       "commitHash": "ba3840db98e27404de45a0c17d2a5d11865cd6db",
       "shortCommitHash": "ba3840d",
       "subject": "feat(providers): integrate Go Local with LiteRT-LM as first-class primary AI provider",
@@ -147,9 +290,9 @@
       "isMajorVersionStart": false
     },
     {
-      "version": "v0.7",
+      "version": "v0.8",
       "major": 0,
-      "sequence": 7,
+      "sequence": 8,
       "commitHash": "277297e7505e1f8b5362d8ca9eb695080883ebf5",
       "shortCommitHash": "277297e",
       "subject": "Versions",
@@ -317,9 +460,9 @@
       "isMajorVersionStart": false
     },
     {
-      "version": "v0.6",
+      "version": "v0.7",
       "major": 0,
-      "sequence": 6,
+      "sequence": 7,
       "commitHash": "cfada5e132be0e84e1837b3a52e979807081cc15",
       "shortCommitHash": "cfada5e",
       "subject": "feat(v1): implement Milestones 2-8 IndexedDB storage, mutation queue, sync orchestrator, LiteRT-LM POC and local privacy modes",
@@ -512,9 +655,9 @@
       "isMajorVersionStart": false
     },
     {
-      "version": "v0.5",
+      "version": "v0.6",
       "major": 0,
-      "sequence": 5,
+      "sequence": 6,
       "commitHash": "8b09987060c4685acba21994e9a69f903f1b300f",
       "shortCommitHash": "8b09987",
       "subject": "feat(pwa): implement Milestone 1 PWA foundation and offline application shell",
@@ -691,6 +834,43 @@
       "filesChanged": 26,
       "insertions": 2568,
       "deletions": 3,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.5",
+      "major": 0,
+      "sequence": 5,
+      "commitHash": "23b6604e5adb624bd0a40c20639c10210401fa91",
+      "shortCommitHash": "23b6604",
+      "subject": "docs: record YAI Studio V0 release freeze and V1 handoff report",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T13:17:18+05:30",
+      "committedAt": "2026-11-19T13:17:18+05:30",
+      "changeType": [
+        "documentation"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-v0-release-freeze-and-v1-branch-handoff.md",
+        "docs/releases/YAI_STUDIO_V0_RELEASE_AND_V1_HANDOFF.md"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-v0-release-freeze-and-v1-branch-handoff.md",
+          "insertions": 628,
+          "deletions": 0
+        },
+        {
+          "path": "docs/releases/YAI_STUDIO_V0_RELEASE_AND_V1_HANDOFF.md",
+          "insertions": 189,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 2,
+      "insertions": 817,
+      "deletions": 0,
       "isBaseline": false,
       "isMajorVersionStart": false
     },
