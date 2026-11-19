@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { PWAProvider } from '@/lib/pwa/pwa-context';
+import { LocalStoreProvider } from '@/lib/storage/client/local-store-provider';
 import '@/styles/globals.css';
 
 export const viewport: Viewport = {
@@ -64,7 +65,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <PWAProvider>{children}</PWAProvider>
+        <PWAProvider>
+          <LocalStoreProvider>{children}</LocalStoreProvider>
+        </PWAProvider>
       </body>
     </html>
   );

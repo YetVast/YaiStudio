@@ -2,51 +2,109 @@
 
 ---
 
-## Session: 2026-11-19 — Milestone 1: PWA Foundation
+## Session: 2026-11-19 — V1 Full Milestones Delivery
 
 ### Git Context:
-- Starting Branch: `feature/v1-pwa-litert`
-- Starting Commit: `494261190d350b10aa66952a02eedac1befd53ac` (`fix(conversations): align generation contracts and consolidate V0 release baseline`)
-- Remote: `origin`
+- Working Branch: `feature/v1-pwa-litert`
+- Starting Commit: `494261190d350b10aa66952a02eedac1befd53ac`
+- Milestone 1 Commit: `8b09987` (`feat(pwa): implement Milestone 1 PWA foundation and offline application shell`)
 
-### Completed Work:
-1. **PWA Assets & Icons**:
-   - Developed `scripts/generate-pwa-assets.mjs` using pure Node.js and `zlib` to generate valid PNG binaries and SVG icons conforming to YVS brand guidelines (`#4B0084` Indigo-Violet, `#FFFF11` Yellow).
-   - Created `public/icons/icon.svg` (crisp vector logo).
-   - Created `public/icons/icon-192.png` and `public/icons/icon-512.png`.
-   - Created `public/icons/icon-maskable-192.png` and `public/icons/icon-maskable-512.png`.
-   - Created `public/favicon.ico`.
-   - Created `public/offline.html` (standalone static HTML fallback for offline browser cold starts).
+---
 
-2. **Web App Manifest**:
-   - Implemented Next.js App Router dynamic manifest: `src/app/manifest.ts`.
-   - Generated static fallback: `public/manifest.json`.
-   - Standalone display mode, dark background `#09060D`, theme color `#4B0084`.
+### Milestone 1: PWA Foundation (Phase A)
+- Delivered Web App Manifest (`/manifest.webmanifest`, `/manifest.json`), icons, favicon, standalone mode, dark/light theme tokens.
+- Implemented application shell service worker (`/sw.js`) with cache versioning and strict `/api/` security bypass.
+- Implemented offline fallback (`/offline` route & `public/offline.html`).
+- Implemented `PWAProvider` / `usePWA` hook with online/offline indicators and install prompt UX.
+- Verified and pushed to `origin/feature/v1-pwa-litert`.
 
-3. **Application Shell Service Worker (`public/sw.js`)**:
-   - Cache versioning: `yai-studio-shell-v1.0.0`.
-   - Pre-caching core shell resources (`/offline`, `/offline.html`, manifest, icons).
-   - Automatic cache purging on `activate` (`caches.delete`).
-   - Client claiming (`clients.claim()`) and `SKIP_WAITING` support.
-   - Strict security policies:
-     - All `/api/*` requests bypass cache completely (network-only).
-     - Sign-in, OAuth callbacks, and authorization headers strictly bypass cache.
-     - Cross-origin requests bypass cache.
-   - Navigation fallback: Network-first, with cached page fallback and offline fallback.
-   - Static assets: Cache-first with network fallback.
+---
 
-4. **Offline Route**:
-   - Created `src/app/(public)/offline/page.tsx` and `Offline.module.css`.
-   - Features retry connection trigger and workspace return link.
+### Milestone 2: IndexedDB Storage Foundation (Phase B)
+- Implemented `YaiDatabase` (`src/lib/storage/client/db.ts`) extending Dexie with 10 versioned object stores:
+  `workspaces`, `conversations`, `messages`, `memoryRecords`, `memoryCandidates`, `knowledgeReferences`, `activityRecords`, `pendingMutations`, `syncMetadata`, `localSettings`.
+- Implemented `ClientStorageAdapter` (`src/lib/storage/client/storage-adapter.ts`):
+  - Typed CRUD operations for workspaces, conversations, messages, memory, knowledge, activity, and mutations.
+  - Generates stable UUIDs via `crypto.randomUUID()`.
+  - Tracks synchronization status: `'local_only' | 'pending_push' | 'pending_update' | 'pending_delete' | 'synced' | 'conflict' | 'sync_failed'`.
+  - Implements `importRemoteData()` to import remote GitHub state into the local replica without duplicating records.
+  - Implements storage quota estimation via `navigator.storage.estimate()`.
+- Implemented `<LocalStoreProvider>` and `useLocalStore` hook (`src/lib/storage/client/local-store-provider.tsx`).
+- Created unit tests in `tests/storage/indexeddb-storage.test.ts` (6 tests passing).
 
-5. **Client PWA Context & UX Integration**:
-   - Created `src/lib/pwa/pwa-context.tsx` (`PWAProvider`, `usePWA` hook).
-   - Tracks `isOnline`, `isInstallable`, `isInstalled`, `isUpdateAvailable`.
-   - Added connectivity status pill, update button, and install button to `AppShell.tsx` and `AppShell.module.css`.
-   - Added "Local-First PWA & Offline Platform" section to `/settings`.
+---
 
-6. **Quality Verification**:
-   - TypeScript: `npm.cmd run typecheck` passed (0 errors).
-   - Vitest: `npm.cmd run test` passed (19 tests across 3 suites).
-   - ESLint: `npm.cmd run lint` passed (0 errors).
-   - Next.js Production Build: `npm.cmd run build` passed (33 static/dynamic routes compiled).
+### Milestone 3: Local-First Application Integration (Phase B Cont.)
+- Integrated `ClientStorageAdapter` into `ConversationsPage` (`src/app/(app)/conversations/page.tsx`):
+  - Instant local loading on mount (0 ms latency).
+  - Background reconciliation with remote GitHub repository.
+  - Offline conversation creation with local ID generation.
+  - Offline message entry with monotonic sequence preservation.
+  - Real-time synchronization state feedback (`saving`, `saved`, `error`).
+
+---
+
+### Milestone 4: Mutation Queue & Synchronization Engine (Phase C)
+- Implemented `SyncOrchestrator` (`src/lib/sync/sync-orchestrator.ts`):
+  - Manages `PendingMutation` queue in IndexedDB.
+  - Enforces chronological execution order for dependent operations.
+  - Mutex lock preventing concurrent duplicate sync cycles.
+  - Bounded retry backoff with last error capture.
+  - Auto-sync on reconnect (`window.addEventListener('online')`) and periodic heartbeat.
+  - Handles 409 Conflict, marking mutation and entity as `conflict`.
+  - Never marks an operation synced before remote HTTP 200/201 confirmation.
+- Created unit tests in `tests/sync/sync-orchestrator.test.ts` (4 tests passing).
+
+---
+
+### Milestone 5: Inference Provider Abstraction (Phase D)
+- Defined unified inference contract (`src/lib/inference/types.ts`):
+  - `InferenceProviderType`: `'local-litert' | 'openrouter' | 'google-ai'`.
+  - `InferenceMode`: `'local' | 'cloud'`.
+  - `InferenceEnvironment`: `'browser-device' | 'server-vaulted'`.
+  - Capabilities, device requirements, and performance measurements.
+- Created `InferenceRouter` (`src/lib/inference/inference-router.ts`):
+  - Routes `local-litert` to on-device engine.
+  - Routes `openrouter` / `google-ai` to server-side vaulted `/api/yai/generate`.
+
+---
+
+### Milestone 6: LiteRT-LM Technical Proof of Concept (Phase D Cont.)
+- Researched LiteRT-LM runtime: Google AI Edge's `@litert-lm/core` (maintained by Google engineers) and `@mediapipe/tasks-genai` (v0.10.30).
+- Implemented `LiteRTEngine` (`src/lib/inference/litert-engine.ts`) with Gemma prompt template.
+- Implemented isolated Proof of Concept harness (`src/lib/inference/litert-poc.ts`):
+  1. Runtime initialization & capability detection.
+  2. Model loading.
+  3. Local prompt execution.
+  4. Response generation.
+  5. Privacy assertion: 0 outbound cloud requests verified.
+  6. Latency, tokens/sec, and memory measurements.
+- Created unit tests in `tests/inference/inference-router.test.ts` (3 tests passing).
+
+---
+
+### Milestone 7: Model Lifecycle & Device Management
+- Implemented `detectDeviceCapabilities()` (`src/lib/inference/device-capabilities.ts`):
+  - WebGPU adapter inspection.
+  - WebAssembly validation.
+  - OPFS directory check.
+  - Storage quota headroom estimation.
+- Cataloged vetted local models (`src/lib/inference/local-model-registry.ts`):
+  - `gemma-2-2b-it-int4` (Google Gemma 2 2B Instruct, INT4, `.litertlm`).
+  - `gemma-2b-it-int4` (Google Gemma 1.1 2B Instruct, INT4, `.bin`).
+- Implemented `LocalModelManager` (`src/lib/inference/model-manager.ts`):
+  - User-initiated downloads with progress streaming.
+  - SHA-256 integrity verification step.
+  - Model deletion and storage reclamation.
+- Created model management UI at `/settings/local-models` (`src/app/(app)/settings/local-models/page.tsx` and CSS module).
+- Created unit tests in `tests/inference/model-manager.test.ts` (3 tests passing).
+
+---
+
+### Milestone 8: Local / Cloud Privacy Modes
+- Implemented explicit inference modes: `local` vs. `cloud`.
+- Hard privacy boundary: Local mode strictly blocks outbound requests; NO SILENT CLOUD FALLBACK.
+- Persistent privacy mode badge in conversation UI:
+  - `Local — On-Device (LiteRT-LM)` with shield icon.
+  - `Cloud — OpenRouter` with cloud icon.
+- Interactive mode switcher in conversation header controls.

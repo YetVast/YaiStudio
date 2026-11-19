@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   MessageSquare,
   Plus,
@@ -15,14 +15,22 @@ import {
   AlertCircle,
   RefreshCw,
   ArrowLeft,
+  Shield,
+  Cloud,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { StatusBadge, type SyncStatus } from '@/components/ui/StatusBadge';
 import { formatMarkdown } from '@/lib/client/safe-markdown';
+import { useLocalStore } from '@/lib/storage/client/local-store-provider';
+import { usePWA } from '@/lib/pwa/pwa-context';
+import { InferenceRouter } from '@/lib/inference/inference-router';
+import type { InferenceMode } from '@/lib/inference/types';
 import type { ConversationIndexEntry, Message, ConversationMeta } from '@/types/personal-intelligence';
 import styles from './Conversations.module.css';
 
 export default function ConversationsPage() {
+  const { adapter } = useLocalStore();
+  const { isOnline } = usePWA();
   const [conversations, setConversations] = useState<ConversationIndexEntry[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeMeta, setActiveMeta] = useState<ConversationMeta | null>(null);
@@ -30,6 +38,7 @@ export default function ConversationsPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [markdownTranscript, setMarkdownTranscript] = useState<string | null>(null);
   const [showMarkdown, setShowMarkdown] = useState(false);
+  const [inferenceMode, setInferenceMode] = useState<InferenceMode>('local');
 
   // Mobile view state: when true on mobile, shows conversation view; when false, shows list
   const [showMobileChat, setShowMobileChat] = useState(false);
@@ -56,35 +65,8 @@ export default function ConversationsPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // 1. Fetch conversations index
-  const fetchConversations = async () => {
-    setLoadingList(true);
-    try {
-      const res = await fetch('/api/conversations');
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data.conversations || []);
-        if (data.conversations?.length > 0 && !activeId) {
-          selectConversation(data.conversations[0].id, false);
-        }
-      }
-    } catch {
-      setErrorMessage('Failed to load conversations index');
-    } finally {
-      setLoadingList(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, generating]);
-
-  // 2. Select and load conversation
-  const selectConversation = async (id: string, isUserAction = false) => {
+  // 1. Select and load conversation
+  const selectConversation = useCallback(async (id: string, isUserAction = false) => {
     setActiveId(id);
     if (isUserAction) {
       setShowMobileChat(true);
@@ -92,74 +74,205 @@ export default function ConversationsPage() {
     setLoadingConversation(true);
     setErrorMessage(null);
     setShowMarkdown(false);
-    try {
-      const res = await fetch(`/api/conversations/${id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setActiveMeta(data.meta);
-        setMetaSha(data.metaSha);
-        setMessages(data.messages || []);
-        setMarkdownTranscript(data.markdown || null);
-        setEditedTitle(data.meta.title);
-      } else {
-        throw new Error('Conversation not found');
-      }
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to load conversation');
-    } finally {
-      setLoadingConversation(false);
-    }
-  };
 
-  // 3. Create new conversation
+    // Load from local IndexedDB first
+    if (adapter) {
+      try {
+        const localConv = await adapter.getConversation(id);
+        const localMsgs = await adapter.listMessages(id);
+        if (localConv) {
+          setActiveMeta({
+            id: localConv.id,
+            title: localConv.title,
+            createdAt: localConv.createdAt,
+            updatedAt: localConv.updatedAt,
+            workspacePath: null,
+            status: localConv.status,
+            model: localConv.model,
+            provider: localConv.provider,
+          });
+          setEditedTitle(localConv.title);
+          if (localMsgs.length > 0) {
+            setMessages(
+              localMsgs.map((m) => ({
+                id: m.id,
+                sequence: m.sequence,
+                role: m.role,
+                content: m.content,
+                createdAt: m.createdAt,
+                model: m.model,
+                provider: m.provider,
+              }))
+            );
+          }
+        }
+      } catch (e) {
+        console.warn('Local conversation load deferred:', e);
+      }
+    }
+
+    // Reconcile with remote API if online
+    if (isOnline) {
+      try {
+        const res = await fetch(`/api/conversations/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setActiveMeta(data.meta);
+          setMetaSha(data.metaSha);
+          setMessages(data.messages || []);
+          setMarkdownTranscript(data.markdown || null);
+          setEditedTitle(data.meta.title);
+        }
+      } catch {
+        // If fetch fails, keep local version
+      }
+    }
+
+    setLoadingConversation(false);
+  }, [adapter, isOnline]);
+
+  // 2. Fetch conversations index
+  const fetchConversations = useCallback(async () => {
+    setLoadingList(true);
+    let loadedFromLocal = false;
+
+    // A. Instant Local-First Load from IndexedDB
+    if (adapter) {
+      try {
+        const localList = await adapter.listConversations();
+        if (localList.items.length > 0) {
+          const entries: ConversationIndexEntry[] = localList.items.map((c) => ({
+            id: c.id,
+            title: c.title,
+            workspaceName: null,
+            path: `conversations/${c.id}`,
+            updatedAt: c.updatedAt,
+          }));
+          setConversations(entries);
+          loadedFromLocal = true;
+          if (!activeId) {
+            selectConversation(entries[0].id, false);
+          }
+        }
+      } catch (err) {
+        console.warn('Local index retrieval deferred:', err);
+      }
+    }
+
+    // B. Reconcile with remote GitHub API when online
+    if (isOnline) {
+      try {
+        const res = await fetch('/api/conversations');
+        if (res.ok) {
+          const data = await res.json();
+          const remoteList: ConversationIndexEntry[] = data.conversations || [];
+          setConversations(remoteList);
+          if (remoteList.length > 0 && !activeId && !loadedFromLocal) {
+            selectConversation(remoteList[0].id, false);
+          }
+        }
+      } catch {
+        if (!loadedFromLocal) {
+          setErrorMessage('Operating in offline mode. Local conversations loaded.');
+        }
+      }
+    }
+
+    setLoadingList(false);
+  }, [adapter, isOnline, activeId, selectConversation]);
+
+  // 3. Create new conversation (supports offline & online)
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
     setErrorMessage(null);
-    try {
-      const res = await fetch('/api/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle.trim() }),
-      });
-      if (res.ok) {
-        const created = await res.json();
-        setShowNewModal(false);
-        setNewTitle('');
-        await fetchConversations();
-        selectConversation(created.id, true);
+
+    const title = newTitle.trim();
+    setShowNewModal(false);
+    setNewTitle('');
+
+    // If offline or local store ready, create in IndexedDB first
+    if (adapter) {
+      try {
+        const localConv = await adapter.createConversation(
+          { title, model: 'gemma-2-2b-it-int4', provider: 'local-litert' },
+          { offline: !isOnline }
+        );
+
+        setConversations((prev) => [
+          {
+            id: localConv.id,
+            title: localConv.title,
+            workspaceName: null,
+            path: `conversations/${localConv.id}`,
+            updatedAt: localConv.updatedAt,
+          },
+          ...prev,
+        ]);
+
+        selectConversation(localConv.id, true);
         setShowMobileChat(true);
-      } else {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to create conversation');
+
+        if (!isOnline) {
+          return; // Saved locally; sync queue will push when online
+        }
+      } catch (err) {
+        console.warn('Local creation fallback:', err);
       }
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Creation failed');
+    }
+
+    // When online, also trigger API route
+    if (isOnline) {
+      try {
+        const res = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title }),
+        });
+        if (res.ok) {
+          const created = await res.json();
+          await fetchConversations();
+          selectConversation(created.id, true);
+          setShowMobileChat(true);
+        }
+      } catch (err) {
+        setErrorMessage(err instanceof Error ? err.message : 'Creation failed');
+      }
     }
   };
 
   // 4. Update title
   const handleSaveTitle = async () => {
-    if (!activeId || !editedTitle.trim() || !metaSha) return;
-    try {
-      const res = await fetch(`/api/conversations/${activeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: editedTitle.trim(), metaSha }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setActiveMeta(updated);
-        setIsEditingTitle(false);
-        setConversations((prev) =>
-          prev.map((c) => (c.id === activeId ? { ...c, title: updated.title } : c)),
-        );
-      }
-    } catch {
-      setErrorMessage('Failed to update title');
+    if (!activeId || !editedTitle.trim()) return;
+    const title = editedTitle.trim();
+
+    // Local update
+    if (adapter) {
+      await adapter.updateConversation(activeId, { title }).catch(console.warn);
     }
+
+    if (isOnline && metaSha) {
+      try {
+        const res = await fetch(`/api/conversations/${activeId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, metaSha }),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setActiveMeta(updated);
+        }
+      } catch {
+        setErrorMessage('Saved locally; will synchronize to GitHub on reconnect.');
+      }
+    }
+
+    setIsEditingTitle(false);
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeId ? { ...c, title } : c))
+    );
   };
 
-  // 5. Send message & generate response
+  // 5. Send message & generate response (handles Local vs. Cloud modes)
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || !activeId || generating) return;
@@ -181,37 +294,99 @@ export default function ConversationsPage() {
     setSyncStatus('saving');
     setGenerating(true);
 
-    try {
-      // Call YAI Generation (handles user message persistence + cloud inference + assistant turn)
-      const genRes = await fetch('/api/yai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: activeId,
-          message: userText,
-          prompt: userText,
-        }),
-      });
-
-      const genData = await genRes.json();
-      if (!genRes.ok) {
-        throw new Error(
-          genData.error || 'Failed to generate response. Check AI Provider configuration.',
+    // 1. Immediately persist user message to IndexedDB
+    if (adapter) {
+      try {
+        await adapter.appendMessage(
+          activeId,
+          { role: 'user', content: userText },
+          { offline: !isOnline }
         );
+      } catch (e) {
+        console.warn('Local message persistence deferred:', e);
       }
+    }
 
-      // Update state with assistant response
-      const assistantMsg = genData.assistantMessage || genData.message;
-      if (assistantMsg) {
+    try {
+      // 2. Execute Generation based on explicit Privacy Mode
+      if (inferenceMode === 'local') {
+        // STRICT LOCAL MODE: Zero cloud requests, executed on-device via LiteRT-LM
+        const updatedMsgs = [...messages, tempUserMsg].map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
+        const result = await InferenceRouter.route({
+          messages: updatedMsgs,
+          model: 'gemma-2-2b-it-int4',
+          provider: 'local-litert',
+          mode: 'local',
+          systemPrompt: 'You are YAI Studio Local Intelligence, running on-device via LiteRT-LM.',
+        });
+
+        const assistantMsg: Message = {
+          id: `msg_asst_${Date.now()}`,
+          sequence: messages.length + 2,
+          role: 'assistant',
+          content: result.content,
+          createdAt: new Date().toISOString(),
+          model: 'gemma-2-2b-it-int4',
+          provider: 'local-litert',
+        };
+
         setMessages((prev) => [...prev, assistantMsg]);
+
+        if (adapter) {
+          await adapter.appendMessage(
+            activeId,
+            { role: 'assistant', content: result.content, model: 'gemma-2-2b-it-int4', provider: 'local-litert' },
+            { offline: !isOnline }
+          ).catch(console.warn);
+        }
+
+        setSyncStatus('saved');
+      } else {
+        // CLOUD BYOK MODE
+        if (!isOnline) {
+          throw new Error('Cloud inference requires an active internet connection. Please switch to Local Mode.');
+        }
+
+        const genRes = await fetch('/api/yai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId: activeId,
+            message: userText,
+            prompt: userText,
+          }),
+        });
+
+        const genData = await genRes.json();
+        if (!genRes.ok) {
+          throw new Error(
+            genData.error || 'Failed to generate response. Check AI Provider configuration in Settings.'
+          );
+        }
+
+        const assistantMsg = genData.assistantMessage || genData.message;
+        if (assistantMsg) {
+          setMessages((prev) => [...prev, assistantMsg]);
+          if (adapter) {
+            await adapter.appendMessage(
+              activeId,
+              { role: 'assistant', content: assistantMsg.content, model: assistantMsg.model, provider: assistantMsg.provider },
+              { offline: false }
+            ).catch(console.warn);
+          }
+        }
+        setSyncStatus('saved');
       }
-      setSyncStatus('saved');
     } catch (err) {
       setSyncStatus('error');
       setErrorMessage(
         err instanceof Error
           ? err.message
-          : 'Failed to generate response. Check AI Provider configuration.',
+          : 'Failed to generate response. Check provider configuration or local model state.'
       );
     } finally {
       setGenerating(false);
@@ -356,16 +531,46 @@ export default function ConversationsPage() {
                 )}
                 <div className={styles.headerMetaRow}>
                   <StatusBadge status={syncStatus} />
+
+                  {/* Persistent Execution Mode Badge (Milestone 8) */}
+                  {inferenceMode === 'local' ? (
+                    <span
+                      className={styles.privacyPillLocal}
+                      title="Strict Local Privacy Mode: On-device LiteRT-LM execution with zero cloud transmission"
+                    >
+                      <Shield size={11} aria-hidden="true" />
+                      <span>Local — On-Device (LiteRT-LM)</span>
+                    </span>
+                  ) : (
+                    <span
+                      className={styles.privacyPillCloud}
+                      title="Cloud Mode: BYOK execution via encrypted server vault"
+                    >
+                      <Cloud size={11} aria-hidden="true" />
+                      <span>Cloud — {activeMeta.provider || 'OpenRouter'}</span>
+                    </span>
+                  )}
+
                   {activeMeta.model && (
                     <span className={styles.modelMetaBadge}>
                       <Cpu size={11} />
-                      <span>{activeMeta.model}</span>
+                      <span>{inferenceMode === 'local' ? 'Gemma 2B (LiteRT)' : activeMeta.model}</span>
                     </span>
                   )}
                 </div>
               </div>
 
               <div className={styles.headerControls}>
+                <button
+                  type="button"
+                  onClick={() => setInferenceMode((m) => (m === 'local' ? 'cloud' : 'local'))}
+                  className={styles.modeToggleBtn}
+                  title={`Switch inference mode (Currently ${inferenceMode.toUpperCase()})`}
+                >
+                  <Cpu size={12} />
+                  <span>Mode: {inferenceMode === 'local' ? 'Local' : 'Cloud'}</span>
+                </button>
+
                 <button
                   onClick={() => setShowMarkdown(!showMarkdown)}
                   className={`${styles.toggleMdBtn} ${showMarkdown ? styles.toggleMdActive : ''}`}
