@@ -61,6 +61,41 @@
   color: var(--color-primary);
 }
 
+.versionBadge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, transform 100ms ease;
+}
+
+.versionBadge:hover {
+  color: var(--color-foreground);
+  border-color: var(--color-primary);
+  background-color: var(--color-secondary);
+}
+
+.versionBadge:active {
+  transform: scale(0.96);
+}
+
+.versionBadge:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
 .headerRight {
   display: flex;
   align-items: center;

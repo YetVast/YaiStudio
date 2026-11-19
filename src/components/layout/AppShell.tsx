@@ -7,6 +7,7 @@ import { Moon, Sun, Menu, WifiOff, RefreshCw, Download } from 'lucide-react';
 import { ThemeProvider, useTheme } from '@/components/providers/ThemeProvider';
 import { usePWA } from '@/lib/pwa/pwa-context';
 import AppNav from '@/components/navigation/AppNav';
+import manifest from '@/generated/version-history.json';
 import styles from './AppShell.module.css';
 
 function ShellInner({ children }: { children: React.ReactNode }) {
@@ -57,6 +58,14 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             <span className={styles.wordmark}>
               <span className={styles.wordmarkAccent}>YAI</span> Studio
             </span>
+          </Link>
+          <Link
+            href="/versions"
+            className={styles.versionBadge}
+            aria-label={`YAI Studio version ${manifest.currentVersion || 'v0.8'}`}
+            title={`Version ${manifest.currentVersion || 'v0.8'} — View Version History`}
+          >
+            {manifest.currentVersion || 'v0.8'}
           </Link>
         </div>
         <div className={styles.headerRight}>
