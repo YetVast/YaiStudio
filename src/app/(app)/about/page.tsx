@@ -12,6 +12,7 @@ import {
   Workflow,
   Sparkles,
   ExternalLink,
+  History,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import styles from './About.module.css';
@@ -188,6 +189,10 @@ export default function AboutPage() {
             <Button href="/settings" variant="outline">
               <Lock size={14} />
               <span>Settings & Diagnostics</span>
+            </Button>
+            <Button href="/versions" variant="outline">
+              <History size={14} />
+              <span>Version History</span>
             </Button>
           </div>
         </div>

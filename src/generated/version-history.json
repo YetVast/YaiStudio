@@ -1,0 +1,1028 @@
+{
+  "applicationName": "YAI Studio",
+  "repository": "YetVastSolutions/YaiStudio",
+  "generatedAt": "2026-11-19T11:15:47.565Z",
+  "currentVersion": "v0.8",
+  "currentMajor": 0,
+  "totalVersions": 8,
+  "baseline": {
+    "version": "v0.1",
+    "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
+    "shortCommitHash": "d4cabeb",
+    "subject": "UI Consistency, Navigation & Mobile UX Improvements",
+    "committedAt": "2026-11-19T12:29:34+05:30"
+  },
+  "milestones": [
+    {
+      "major": 0,
+      "name": "YAI Studio V0 Foundation Baseline",
+      "startCommit": "d4cabebcfd960b6547dd5217669c60d508982c28",
+      "authorizedBy": "Yagnavalk Chaapala",
+      "authorizedDate": "2026-11-19T12:29:34+05:30",
+      "description": "Baseline application version established at commit d4cabeb with UI consistency, navigation, and mobile UX improvements."
+    }
+  ],
+  "versions": [
+    {
+      "version": "v0.8",
+      "major": 0,
+      "sequence": 8,
+      "commitHash": "ba3840db98e27404de45a0c17d2a5d11865cd6db",
+      "shortCommitHash": "ba3840d",
+      "subject": "feat(providers): integrate Go Local with LiteRT-LM as first-class primary AI provider",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T15:30:00+05:30",
+      "committedAt": "2026-11-19T15:30:00+05:30",
+      "changeType": [
+        "feature",
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-v1-litert-lm-first-class-ai-provider.md",
+        "docs/v1/V1_IMPLEMENTATION_LOG.md",
+        "src/app/(app)/conversations/Conversations.module.css",
+        "src/app/(app)/conversations/page.tsx",
+        "src/app/(app)/providers/Providers.module.css",
+        "src/app/(app)/providers/page.tsx",
+        "src/app/(app)/settings/local-models/page.tsx",
+        "src/app/(app)/settings/page.tsx",
+        "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+        "src/app/(app)/settings/yai-local/page.tsx",
+        "src/generated/version-history.json",
+        "src/lib/inference/inference-router.ts",
+        "src/lib/inference/local-ai-config.ts",
+        "src/lib/inference/model-manager.ts",
+        "src/lib/inference/types.ts",
+        "tests/inference/local-ai-provider.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-v1-litert-lm-first-class-ai-provider.md",
+          "insertions": 449,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v1/V1_IMPLEMENTATION_LOG.md",
+          "insertions": 20,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/conversations/Conversations.module.css",
+          "insertions": 15,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/conversations/page.tsx",
+          "insertions": 52,
+          "deletions": 11
+        },
+        {
+          "path": "src/app/(app)/providers/Providers.module.css",
+          "insertions": 68,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/providers/page.tsx",
+          "insertions": 125,
+          "deletions": 12
+        },
+        {
+          "path": "src/app/(app)/settings/local-models/page.tsx",
+          "insertions": 3,
+          "deletions": 370
+        },
+        {
+          "path": "src/app/(app)/settings/page.tsx",
+          "insertions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+          "insertions": 556,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/page.tsx",
+          "insertions": 915,
+          "deletions": 0
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 173,
+          "deletions": 3
+        },
+        {
+          "path": "src/lib/inference/inference-router.ts",
+          "insertions": 34,
+          "deletions": 7
+        },
+        {
+          "path": "src/lib/inference/local-ai-config.ts",
+          "insertions": 174,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/model-manager.ts",
+          "insertions": 63,
+          "deletions": 30
+        },
+        {
+          "path": "src/lib/inference/types.ts",
+          "insertions": 10,
+          "deletions": 1
+        },
+        {
+          "path": "tests/inference/local-ai-provider.test.ts",
+          "insertions": 240,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 16,
+      "insertions": 2898,
+      "deletions": 435,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.7",
+      "major": 0,
+      "sequence": 7,
+      "commitHash": "277297e7505e1f8b5362d8ca9eb695080883ebf5",
+      "shortCommitHash": "277297e",
+      "subject": "Versions",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T15:11:07+05:30",
+      "committedAt": "2026-11-19T15:11:07+05:30",
+      "changeType": [
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/architecture/APPLICATION_VERSION_HISTORY.md",
+        "docs/implementation/2026-11-19-application-version-history-system.md",
+        "docs/reference/YVS_APPLICATION_VERSION_HISTORY_STANDARD.md",
+        "package.json",
+        "scripts/generate-version-history.ts",
+        "src/app/(app)/about/page.tsx",
+        "src/app/(public)/PublicLayout.module.css",
+        "src/app/(public)/offline/Offline.module.css",
+        "src/app/(public)/sign-in/page.tsx",
+        "src/app/(public)/versions/Versions.module.css",
+        "src/app/(public)/versions/VersionsClient.tsx",
+        "src/app/(public)/versions/layout.tsx",
+        "src/app/(public)/versions/page.tsx",
+        "src/app/api/versions/route.ts",
+        "src/components/navigation/AppNav.tsx",
+        "src/generated/version-history.json",
+        "src/lib/versions/generator.ts",
+        "src/lib/versions/types.ts",
+        "src/middleware.ts",
+        "tests/versions/version-generator.test.ts",
+        "tests/versions/version-routes.test.ts",
+        "tsconfig.json",
+        "versions/README.md",
+        "versions/major-version.json"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/architecture/APPLICATION_VERSION_HISTORY.md",
+          "insertions": 221,
+          "deletions": 0
+        },
+        {
+          "path": "docs/implementation/2026-11-19-application-version-history-system.md",
+          "insertions": 530,
+          "deletions": 0
+        },
+        {
+          "path": "docs/reference/YVS_APPLICATION_VERSION_HISTORY_STANDARD.md",
+          "insertions": 319,
+          "deletions": 0
+        },
+        {
+          "path": "package.json",
+          "insertions": 3,
+          "deletions": 1
+        },
+        {
+          "path": "scripts/generate-version-history.ts",
+          "insertions": 50,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/about/page.tsx",
+          "insertions": 5,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/PublicLayout.module.css",
+          "insertions": 1,
+          "deletions": 3
+        },
+        {
+          "path": "src/app/(public)/offline/Offline.module.css",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/sign-in/page.tsx",
+          "insertions": 5,
+          "deletions": 1
+        },
+        {
+          "path": "src/app/(public)/versions/Versions.module.css",
+          "insertions": 714,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/versions/VersionsClient.tsx",
+          "insertions": 552,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/versions/layout.tsx",
+          "insertions": 15,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/versions/page.tsx",
+          "insertions": 11,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/api/versions/route.ts",
+          "insertions": 13,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/navigation/AppNav.tsx",
+          "insertions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 735,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/versions/generator.ts",
+          "insertions": 356,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/versions/types.ts",
+          "insertions": 112,
+          "deletions": 0
+        },
+        {
+          "path": "src/middleware.ts",
+          "insertions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "tests/versions/version-generator.test.ts",
+          "insertions": 273,
+          "deletions": 0
+        },
+        {
+          "path": "tests/versions/version-routes.test.ts",
+          "insertions": 81,
+          "deletions": 0
+        },
+        {
+          "path": "tsconfig.json",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "versions/README.md",
+          "insertions": 109,
+          "deletions": 0
+        },
+        {
+          "path": "versions/major-version.json",
+          "insertions": 16,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 24,
+      "insertions": 4127,
+      "deletions": 5,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.6",
+      "major": 0,
+      "sequence": 6,
+      "commitHash": "cfada5e132be0e84e1837b3a52e979807081cc15",
+      "shortCommitHash": "cfada5e",
+      "subject": "feat(v1): implement Milestones 2-8 IndexedDB storage, mutation queue, sync orchestrator, LiteRT-LM POC and local privacy modes",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T13:55:02+05:30",
+      "committedAt": "2026-11-19T13:55:02+05:30",
+      "changeType": [
+        "feature",
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-v1-local-first-pwa-idb-and-litert.md",
+        "docs/v1/V1_IMPLEMENTATION_LOG.md",
+        "docs/v1/V1_IMPLEMENTATION_PLAN.md",
+        "docs/v1/V1_LOCAL_INFERENCE.md",
+        "package-lock.json",
+        "package.json",
+        "src/app/(app)/conversations/Conversations.module.css",
+        "src/app/(app)/conversations/page.tsx",
+        "src/app/(app)/settings/local-models/LocalModels.module.css",
+        "src/app/(app)/settings/local-models/page.tsx",
+        "src/app/(app)/settings/page.tsx",
+        "src/app/layout.tsx",
+        "src/lib/inference/device-capabilities.ts",
+        "src/lib/inference/inference-router.ts",
+        "src/lib/inference/litert-engine.ts",
+        "src/lib/inference/litert-poc.ts",
+        "src/lib/inference/local-model-registry.ts",
+        "src/lib/inference/model-manager.ts",
+        "src/lib/inference/types.ts",
+        "src/lib/storage/client/db.ts",
+        "src/lib/storage/client/local-store-provider.tsx",
+        "src/lib/storage/client/storage-adapter.ts",
+        "src/lib/storage/client/types.ts",
+        "src/lib/sync/sync-orchestrator.ts",
+        "tests/inference/inference-router.test.ts",
+        "tests/inference/model-manager.test.ts",
+        "tests/storage/indexeddb-storage.test.ts",
+        "tests/sync/sync-orchestrator.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-v1-local-first-pwa-idb-and-litert.md",
+          "insertions": 784,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v1/V1_IMPLEMENTATION_LOG.md",
+          "insertions": 104,
+          "deletions": 46
+        },
+        {
+          "path": "docs/v1/V1_IMPLEMENTATION_PLAN.md",
+          "insertions": 60,
+          "deletions": 32
+        },
+        {
+          "path": "docs/v1/V1_LOCAL_INFERENCE.md",
+          "insertions": 36,
+          "deletions": 25
+        },
+        {
+          "path": "package-lock.json",
+          "insertions": 172,
+          "deletions": 67
+        },
+        {
+          "path": "package.json",
+          "insertions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/conversations/Conversations.module.css",
+          "insertions": 49,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/conversations/page.tsx",
+          "insertions": 308,
+          "deletions": 103
+        },
+        {
+          "path": "src/app/(app)/settings/local-models/LocalModels.module.css",
+          "insertions": 254,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/settings/local-models/page.tsx",
+          "insertions": 372,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/settings/page.tsx",
+          "insertions": 4,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/layout.tsx",
+          "insertions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/lib/inference/device-capabilities.ts",
+          "insertions": 105,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/inference-router.ts",
+          "insertions": 83,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/litert-engine.ts",
+          "insertions": 155,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/litert-poc.ts",
+          "insertions": 79,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/local-model-registry.ts",
+          "insertions": 46,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/model-manager.ts",
+          "insertions": 162,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/types.ts",
+          "insertions": 118,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/storage/client/db.ts",
+          "insertions": 78,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/storage/client/local-store-provider.tsx",
+          "insertions": 93,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/storage/client/storage-adapter.ts",
+          "insertions": 624,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/storage/client/types.ts",
+          "insertions": 154,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/sync/sync-orchestrator.ts",
+          "insertions": 234,
+          "deletions": 0
+        },
+        {
+          "path": "tests/inference/inference-router.test.ts",
+          "insertions": 85,
+          "deletions": 0
+        },
+        {
+          "path": "tests/inference/model-manager.test.ts",
+          "insertions": 63,
+          "deletions": 0
+        },
+        {
+          "path": "tests/storage/indexeddb-storage.test.ts",
+          "insertions": 181,
+          "deletions": 0
+        },
+        {
+          "path": "tests/sync/sync-orchestrator.test.ts",
+          "insertions": 143,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 28,
+      "insertions": 4552,
+      "deletions": 274,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.5",
+      "major": 0,
+      "sequence": 5,
+      "commitHash": "8b09987060c4685acba21994e9a69f903f1b300f",
+      "shortCommitHash": "8b09987",
+      "subject": "feat(pwa): implement Milestone 1 PWA foundation and offline application shell",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T13:35:26+05:30",
+      "committedAt": "2026-11-19T13:35:26+05:30",
+      "changeType": [
+        "feature",
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-v1-milestone-1-pwa-foundation.md",
+        "docs/v1/V1_ARCHITECTURE.md",
+        "docs/v1/V1_DATA_SYNC_DESIGN.md",
+        "docs/v1/V1_IMPLEMENTATION_LOG.md",
+        "docs/v1/V1_IMPLEMENTATION_PLAN.md",
+        "docs/v1/V1_LOCAL_INFERENCE.md",
+        "public/favicon.ico",
+        "public/icons/icon-192.png",
+        "public/icons/icon-512.png",
+        "public/icons/icon-maskable-192.png",
+        "public/icons/icon-maskable-512.png",
+        "public/icons/icon.svg",
+        "public/manifest.json",
+        "public/offline.html",
+        "public/sw.js",
+        "scripts/generate-pwa-assets.mjs",
+        "src/app/(app)/settings/page.tsx",
+        "src/app/(public)/offline/Offline.module.css",
+        "src/app/(public)/offline/page.tsx",
+        "src/app/layout.tsx",
+        "src/app/manifest.ts",
+        "src/components/layout/AppShell.module.css",
+        "src/components/layout/AppShell.tsx",
+        "src/lib/pwa/pwa-context.tsx",
+        "tests/pwa/manifest.test.ts",
+        "tests/pwa/service-worker-security.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-v1-milestone-1-pwa-foundation.md",
+          "insertions": 800,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v1/V1_ARCHITECTURE.md",
+          "insertions": 110,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v1/V1_DATA_SYNC_DESIGN.md",
+          "insertions": 96,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v1/V1_IMPLEMENTATION_LOG.md",
+          "insertions": 52,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v1/V1_IMPLEMENTATION_PLAN.md",
+          "insertions": 61,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v1/V1_LOCAL_INFERENCE.md",
+          "insertions": 37,
+          "deletions": 0
+        },
+        {
+          "path": "public/favicon.ico",
+          "insertions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "public/icons/icon-192.png",
+          "insertions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "public/icons/icon-512.png",
+          "insertions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "public/icons/icon-maskable-192.png",
+          "insertions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "public/icons/icon-maskable-512.png",
+          "insertions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "public/icons/icon.svg",
+          "insertions": 38,
+          "deletions": 0
+        },
+        {
+          "path": "public/manifest.json",
+          "insertions": 44,
+          "deletions": 0
+        },
+        {
+          "path": "public/offline.html",
+          "insertions": 118,
+          "deletions": 0
+        },
+        {
+          "path": "public/sw.js",
+          "insertions": 195,
+          "deletions": 0
+        },
+        {
+          "path": "scripts/generate-pwa-assets.mjs",
+          "insertions": 325,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/settings/page.tsx",
+          "insertions": 91,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/offline/Offline.module.css",
+          "insertions": 81,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/offline/page.tsx",
+          "insertions": 48,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/layout.tsx",
+          "insertions": 31,
+          "deletions": 2
+        },
+        {
+          "path": "src/app/manifest.ts",
+          "insertions": 48,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/layout/AppShell.module.css",
+          "insertions": 53,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "insertions": 42,
+          "deletions": 1
+        },
+        {
+          "path": "src/lib/pwa/pwa-context.tsx",
+          "insertions": 221,
+          "deletions": 0
+        },
+        {
+          "path": "tests/pwa/manifest.test.ts",
+          "insertions": 33,
+          "deletions": 0
+        },
+        {
+          "path": "tests/pwa/service-worker-security.test.ts",
+          "insertions": 44,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 26,
+      "insertions": 2568,
+      "deletions": 3,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.4",
+      "major": 0,
+      "sequence": 4,
+      "commitHash": "494261190d350b10aa66952a02eedac1befd53ac",
+      "shortCommitHash": "4942611",
+      "subject": "fix(conversations): align generation contracts and consolidate V0 release baseline",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T13:11:32+05:30",
+      "committedAt": "2026-11-19T13:11:32+05:30",
+      "changeType": [
+        "fix",
+        "test",
+        "security"
+      ],
+      "changedFiles": [
+        "docs/v0/V0_AS_BUILT_DOCUMENTATION.md",
+        "docs/v0/V0_TESTING_AND_KNOWN_LIMITATIONS.md",
+        "src/app/(app)/conversations/page.tsx",
+        "src/app/api/yai/generate/route.ts",
+        "tests/auth/yetvast-auth-integration.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/v0/V0_AS_BUILT_DOCUMENTATION.md",
+          "insertions": 11,
+          "deletions": 15
+        },
+        {
+          "path": "docs/v0/V0_TESTING_AND_KNOWN_LIMITATIONS.md",
+          "insertions": 18,
+          "deletions": 48
+        },
+        {
+          "path": "src/app/(app)/conversations/page.tsx",
+          "insertions": 6,
+          "deletions": 17
+        },
+        {
+          "path": "src/app/api/yai/generate/route.ts",
+          "insertions": 22,
+          "deletions": 12
+        },
+        {
+          "path": "tests/auth/yetvast-auth-integration.test.ts",
+          "insertions": 25,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 5,
+      "insertions": 82,
+      "deletions": 92,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.3",
+      "major": 0,
+      "sequence": 3,
+      "commitHash": "597b3bd1f7c137f0b30d384a1b99459d07f94af2",
+      "shortCommitHash": "597b3bd",
+      "subject": "v0 readme",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T12:55:01+05:30",
+      "committedAt": "2026-11-19T12:55:01+05:30",
+      "changeType": [
+        "documentation"
+      ],
+      "changedFiles": [
+        "docs/v0/README.md",
+        "docs/v0/V0_README.md"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/v0/README.md",
+          "insertions": 0,
+          "deletions": 43
+        },
+        {
+          "path": "docs/v0/V0_README.md",
+          "insertions": 43,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 2,
+      "insertions": 43,
+      "deletions": 43,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.2",
+      "major": 0,
+      "sequence": 2,
+      "commitHash": "fd909fb82d1c2d0bd28ef51de8105b2d0746502f",
+      "shortCommitHash": "fd909fb",
+      "subject": "V0 — Complete As-Built Documentation and V1 Handoff",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T12:54:20+05:30",
+      "committedAt": "2026-11-19T12:54:20+05:30",
+      "changeType": [
+        "documentation"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-v0-as-built-documentation-and-v1-handoff.md",
+        "docs/v0/README.md",
+        "docs/v0/V0_API_REFERENCE.md",
+        "docs/v0/V0_ARCHITECTURE.md",
+        "docs/v0/V0_AS_BUILT_DOCUMENTATION.md",
+        "docs/v0/V0_AUTHENTICATION_AND_SECURITY.md",
+        "docs/v0/V0_DATA_MODEL_AND_STORAGE.md",
+        "docs/v0/V0_DEPLOYMENT_AND_OPERATIONS.md",
+        "docs/v0/V0_RELEASE_BASELINE.md",
+        "docs/v0/V0_TESTING_AND_KNOWN_LIMITATIONS.md"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-v0-as-built-documentation-and-v1-handoff.md",
+          "insertions": 285,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/README.md",
+          "insertions": 43,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_API_REFERENCE.md",
+          "insertions": 557,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_ARCHITECTURE.md",
+          "insertions": 211,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_AS_BUILT_DOCUMENTATION.md",
+          "insertions": 316,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_AUTHENTICATION_AND_SECURITY.md",
+          "insertions": 204,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_DATA_MODEL_AND_STORAGE.md",
+          "insertions": 437,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_DEPLOYMENT_AND_OPERATIONS.md",
+          "insertions": 143,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_RELEASE_BASELINE.md",
+          "insertions": 238,
+          "deletions": 0
+        },
+        {
+          "path": "docs/v0/V0_TESTING_AND_KNOWN_LIMITATIONS.md",
+          "insertions": 198,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 10,
+      "insertions": 2632,
+      "deletions": 0,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.1",
+      "major": 0,
+      "sequence": 1,
+      "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
+      "shortCommitHash": "d4cabeb",
+      "subject": "UI Consistency, Navigation & Mobile UX Improvements",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T12:29:34+05:30",
+      "committedAt": "2026-11-19T12:29:34+05:30",
+      "changeType": [
+        "ui"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-ui-consistency-navigation-mobile-ux.md",
+        "src/app/(app)/about/About.module.css",
+        "src/app/(app)/about/page.tsx",
+        "src/app/(app)/activity/page.tsx",
+        "src/app/(app)/conversations/Conversations.module.css",
+        "src/app/(app)/conversations/page.tsx",
+        "src/app/(app)/github-connect/page.tsx",
+        "src/app/(app)/knowledge/page.tsx",
+        "src/app/(app)/memory/page.tsx",
+        "src/app/(app)/page.tsx",
+        "src/app/(app)/providers/page.tsx",
+        "src/app/(app)/repo-setup/RepoSetup.module.css",
+        "src/app/(app)/repo-setup/page.tsx",
+        "src/app/(app)/settings/Settings.module.css",
+        "src/app/(app)/settings/page.tsx",
+        "src/app/(app)/workspaces/page.tsx",
+        "src/components/layout/AppShell.module.css",
+        "src/components/layout/AppShell.tsx",
+        "src/components/navigation/AppNav.tsx",
+        "src/components/ui/Button.module.css",
+        "src/components/ui/Button.tsx"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-ui-consistency-navigation-mobile-ux.md",
+          "insertions": 523,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/about/About.module.css",
+          "insertions": 265,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/about/page.tsx",
+          "insertions": 197,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/activity/page.tsx",
+          "insertions": 3,
+          "deletions": 2
+        },
+        {
+          "path": "src/app/(app)/conversations/Conversations.module.css",
+          "insertions": 179,
+          "deletions": 60
+        },
+        {
+          "path": "src/app/(app)/conversations/page.tsx",
+          "insertions": 81,
+          "deletions": 39
+        },
+        {
+          "path": "src/app/(app)/github-connect/page.tsx",
+          "insertions": 3,
+          "deletions": 2
+        },
+        {
+          "path": "src/app/(app)/knowledge/page.tsx",
+          "insertions": 15,
+          "deletions": 9
+        },
+        {
+          "path": "src/app/(app)/memory/page.tsx",
+          "insertions": 15,
+          "deletions": 9
+        },
+        {
+          "path": "src/app/(app)/page.tsx",
+          "insertions": 7,
+          "deletions": 6
+        },
+        {
+          "path": "src/app/(app)/providers/page.tsx",
+          "insertions": 27,
+          "deletions": 17
+        },
+        {
+          "path": "src/app/(app)/repo-setup/RepoSetup.module.css",
+          "insertions": 35,
+          "deletions": 47
+        },
+        {
+          "path": "src/app/(app)/repo-setup/page.tsx",
+          "insertions": 56,
+          "deletions": 17
+        },
+        {
+          "path": "src/app/(app)/settings/Settings.module.css",
+          "insertions": 34,
+          "deletions": 73
+        },
+        {
+          "path": "src/app/(app)/settings/page.tsx",
+          "insertions": 15,
+          "deletions": 13
+        },
+        {
+          "path": "src/app/(app)/workspaces/page.tsx",
+          "insertions": 15,
+          "deletions": 9
+        },
+        {
+          "path": "src/components/layout/AppShell.module.css",
+          "insertions": 65,
+          "deletions": 1
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "insertions": 52,
+          "deletions": 7
+        },
+        {
+          "path": "src/components/navigation/AppNav.tsx",
+          "insertions": 6,
+          "deletions": 1
+        },
+        {
+          "path": "src/components/ui/Button.module.css",
+          "insertions": 78,
+          "deletions": 24
+        },
+        {
+          "path": "src/components/ui/Button.tsx",
+          "insertions": 101,
+          "deletions": 14
+        }
+      ],
+      "filesChanged": 21,
+      "insertions": 1772,
+      "deletions": 350,
+      "isBaseline": true,
+      "isMajorVersionStart": false
+    }
+  ]
+}

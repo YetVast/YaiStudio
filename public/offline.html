@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline — YAI Studio</title>
+  <style>
+    :root {
+      --bg: #09060D;
+      --fg: #F4F1F6;
+      --muted: #A39BA8;
+      --primary: #4B0084;
+      --accent: #FFFF11;
+      --card: #150F1D;
+      --border: #2D2336;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #FFFFFF;
+        --fg: #17121C;
+        --muted: #655C6B;
+        --primary: #4B0084;
+        --accent: #FFFF11;
+        --card: #F9F7FA;
+        --border: #DDD6E2;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 32px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .icon-badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: var(--primary);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--fg);
+    }
+    p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    button, a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .primary-btn {
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+    }
+    .secondary-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--fg);
+    }
+    button:hover, a:hover { opacity: 0.88; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-badge">YAI</div>
+    <h1>You are currently offline</h1>
+    <p>
+      YAI Studio is operating in local mode. Cached workspace data and on-device capabilities remain available, but synchronization with GitHub and cloud APIs will resume once your connection is restored.
+    </p>
+    <div class="actions">
+      <button class="primary-btn" onclick="window.location.reload()">Retry Connection</button>
+      <a href="/" class="secondary-btn">Return to Workspace</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "$schema": "./major-version.schema.json",
+  "baselineCommit": "d4cabebcfd960b6547dd5217669c60d508982c28",
+  "baselineVersion": "v0.1",
+  "currentMajor": 0,
+  "milestones": [
+    {
+      "major": 0,
+      "name": "YAI Studio V0 Foundation Baseline",
+      "startCommit": "d4cabebcfd960b6547dd5217669c60d508982c28",
+      "authorizedBy": "Yagnavalk Chaapala",
+      "authorizedDate": "2026-11-19T12:29:34+05:30",
+      "description": "Baseline application version established at commit d4cabeb with UI consistency, navigation, and mobile UX improvements."
+    }
+  ]
+}
