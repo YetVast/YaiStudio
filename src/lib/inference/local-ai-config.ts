@@ -47,12 +47,12 @@ export class LocalAIConfig {
   }
 
   static getActiveModelId(): string {
-    if (typeof localStorage === 'undefined') return LOCAL_MODEL_CATALOG[0]?.id || 'gemma-2-2b-it-int4';
+    if (typeof localStorage === 'undefined') return LOCAL_MODEL_CATALOG[0]?.id || 'gemma-4-e2b-it-web';
     const val = localStorage.getItem(ACTIVE_MODEL_KEY);
     if (val && LOCAL_MODEL_CATALOG.some((m) => m.id === val)) {
       return val;
     }
-    return LOCAL_MODEL_CATALOG[0]?.id || 'gemma-2-2b-it-int4';
+    return LOCAL_MODEL_CATALOG[0]?.id || 'gemma-4-e2b-it-web';
   }
 
   static setActiveModelId(modelId: string | null): void {

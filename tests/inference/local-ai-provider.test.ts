@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { LocalAIConfig } from '@/lib/inference/local-ai-config';
+import { LOCAL_MODEL_CATALOG } from '@/lib/inference/local-model-registry';
 import { LocalModelManager } from '@/lib/inference/model-manager';
 import { InferenceRouter } from '@/lib/inference/inference-router';
 import type { DeviceCapabilityReport, InstalledModelRecord } from '@/lib/inference/types';
@@ -58,7 +59,7 @@ describe('LiteRT-LM First-Class AI Provider Integration', () => {
     it('initializes with default preferences', () => {
       const prefs = LocalAIConfig.getPreferences();
       expect(prefs.inferenceMode).toBe('auto');
-      expect(prefs.activeModelId).toBe('gemma-2-2b-it-int4');
+      expect(prefs.activeModelId).toBe(LOCAL_MODEL_CATALOG[0].id);
       expect(prefs.preferredCloudProvider).toBe('openrouter');
     });
 
@@ -89,7 +90,7 @@ describe('LiteRT-LM First-Class AI Provider Integration', () => {
 
       LocalAIConfig.setActiveModelId(null);
       // Fallback to default catalog item
-      expect(LocalAIConfig.getActiveModelId()).toBe('gemma-2-2b-it-int4');
+      expect(LocalAIConfig.getActiveModelId()).toBe(LOCAL_MODEL_CATALOG[0].id);
     });
   });
 
