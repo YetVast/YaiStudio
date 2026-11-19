@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Cpu,
   Key,
@@ -12,16 +13,30 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  ShieldCheck,
+  Shield,
+  HardDrive,
 } from 'lucide-react';
 import type { ProviderKeyStatus } from '@/lib/providers/key-store';
 import Button from '@/components/ui/Button';
+import { detectDeviceCapabilities } from '@/lib/inference/device-capabilities';
+import { LocalModelManager } from '@/lib/inference/model-manager';
+import { LocalAIConfig } from '@/lib/inference/local-ai-config';
+import { getLocalModelDescriptor } from '@/lib/inference/local-model-registry';
+import type { DeviceCapabilityReport, InstalledModelRecord, LocalProviderStatus } from '@/lib/inference/types';
 import styles from './Providers.module.css';
 
 export default function ProvidersPage() {
+  const router = useRouter();
   const [providers, setProviders] = useState<ProviderKeyStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Local LiteRT Provider State
+  const [localCaps, setLocalCaps] = useState<DeviceCapabilityReport | null>(null);
+  const [localRecords, setLocalRecords] = useState<InstalledModelRecord[]>([]);
+  const [activeLocalModelId, setActiveLocalModelId] = useState<string>('gemma-2-2b-it-int4');
 
   // Key entry state
   const [activeProvider, setActiveProvider] = useState<'openrouter' | 'google-ai' | null>(null);
@@ -33,11 +48,20 @@ export default function ProvidersPage() {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const res = await fetch('/api/providers');
+      const [res, caps] = await Promise.all([
+        fetch('/api/providers'),
+        detectDeviceCapabilities().catch(() => null),
+      ]);
+
       if (res.ok) {
         const data = await res.json();
         setProviders(data.providers || []);
       }
+
+      setLocalCaps(caps);
+      const records = LocalModelManager.getModelRecords();
+      setLocalRecords(records);
+      setActiveLocalModelId(LocalAIConfig.getActiveModelId());
     } catch {
       setErrorMessage('Failed to load provider configuration');
     } finally {
@@ -47,6 +71,13 @@ export default function ProvidersPage() {
 
   useEffect(() => {
     fetchProviders();
+
+    const handleConfigChange = () => {
+      setActiveLocalModelId(LocalAIConfig.getActiveModelId());
+      setLocalRecords(LocalModelManager.getModelRecords());
+    };
+    window.addEventListener('yai_local_config_change', handleConfigChange);
+    return () => window.removeEventListener('yai_local_config_change', handleConfigChange);
   }, []);
 
   const handleSaveKey = async (e: React.FormEvent) => {
@@ -105,6 +136,13 @@ export default function ProvidersPage() {
   const openRouterStatus = getProviderStatus('openrouter');
   const googleAiStatus = getProviderStatus('google-ai');
 
+  const localStatus: LocalProviderStatus = LocalAIConfig.computeStatus(
+    localCaps,
+    localRecords,
+    activeLocalModelId
+  );
+  const activeModelDescriptor = getLocalModelDescriptor(activeLocalModelId);
+
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -112,8 +150,8 @@ export default function ProvidersPage() {
         <div>
           <h1 className={styles.title}>AI Providers & Models</h1>
           <p className={styles.subtitle}>
-            Configure Bring-Your-Own-Key (BYOK) cloud AI credentials. Keys are encrypted
-            server-side and used exclusively for your Personal Intelligence queries.
+            Configure on-device AI with LiteRT-LM for maximum privacy, or connect Bring-Your-Own-Key
+            (BYOK) cloud AI credentials for access to massive multi-modal frontier models.
           </p>
         </div>
       </div>
@@ -122,11 +160,11 @@ export default function ProvidersPage() {
       <div className={styles.warningBox}>
         <AlertTriangle size={18} className={styles.warningIcon} />
         <div>
-          <strong>V0 Provider Key Storage Boundary</strong>
+          <strong>AI Provider Execution Boundary</strong>
           <p>
-            In V0, your API keys are stored in encrypted server-side memory (AES-256-GCM). Keys are
-            cleared if the server instance restarts. Multi-instance persistent encrypted secret
-            storage (e.g. Vercel KV) requires central decision approval.
+            Local AI models run entirely on your device with zero outbound network requests. Cloud
+            BYOK keys are encrypted server-side with AES-256-GCM and never stored in client bundles or
+            data repositories.
           </p>
         </div>
       </div>
@@ -152,7 +190,82 @@ export default function ProvidersPage() {
         </div>
       ) : (
         <div className={styles.providerGrid}>
-          {/* Card 1: OpenRouter (Primary) */}
+          {/* Card 1: Go Local with LiteRT-LM (Primary On-Device Provider) */}
+          <div
+            className={`${styles.providerCard} ${styles.localProviderCard}`}
+            onClick={() => router.push('/settings/yai-local')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                router.push('/settings/yai-local');
+              }
+            }}
+            aria-label="Go Local with LiteRT-LM — Primary Provider"
+          >
+            <div className={styles.cardHeader}>
+              <div className={styles.providerIdentity}>
+                <ShieldCheck size={20} className={styles.localProviderIcon} />
+                <div>
+                  <div className={styles.providerTitleRow}>
+                    <h3>Go Local with LiteRT-LM</h3>
+                    <span className={styles.primaryBadge}>Primary Provider</span>
+                  </div>
+                  <span className={styles.providerType}>On-Device AI Provider</span>
+                </div>
+              </div>
+              <span
+                className={`${styles.statusPill} ${
+                  localStatus === 'ready'
+                    ? styles.statusConfigured
+                    : localStatus === 'device_unsupported' || localStatus === 'error'
+                    ? styles.statusError
+                    : styles.statusPending
+                }`}
+              >
+                {LocalAIConfig.getStatusLabel(localStatus)}
+              </span>
+            </div>
+
+            <p className={styles.providerDesc}>
+              Run AI models directly on your device. Your prompts and conversations remain on your
+              device during local inference, without sending inference requests to cloud AI providers.
+            </p>
+
+            <div className={styles.keyDetails}>
+              <div className={styles.localInfoGrid}>
+                <div>
+                  <span className={styles.keyLabel}>Active Model:</span>
+                  <span className={styles.localInfoValue}>
+                    {activeModelDescriptor ? activeModelDescriptor.name : 'Gemma 2 2B Instruct (INT4)'}
+                  </span>
+                </div>
+                <div>
+                  <span className={styles.keyLabel}>Inference Privacy:</span>
+                  <span className={styles.localPrivacyPill}>
+                    <Shield size={11} />
+                    <span>Strict On-Device</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.cardFooter}>
+              <Button
+                href="/settings/yai-local"
+                variant="primary"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <Cpu size={14} />
+                <span>{LocalAIConfig.getActionLabel(localStatus)}</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Card 2: OpenRouter (Cloud Provider) */}
           <div className={styles.providerCard}>
             <div className={styles.cardHeader}>
               <div className={styles.providerIdentity}>
@@ -160,9 +273,9 @@ export default function ProvidersPage() {
                 <div>
                   <div className={styles.providerTitleRow}>
                     <h3>OpenRouter</h3>
-                    <span className={styles.primaryBadge}>Primary Provider</span>
+                    <span className={styles.cloudBadge}>Cloud Provider</span>
                   </div>
-                  <span className={styles.providerType}>BYOK Cloud Provider</span>
+                  <span className={styles.providerType}>BYOK Cloud Gateway</span>
                 </div>
               </div>
               <span
@@ -232,7 +345,7 @@ export default function ProvidersPage() {
             </div>
           </div>
 
-          {/* Card 2: Google AI Studio (Optional) */}
+          {/* Card 3: Google AI Studio (Cloud Provider) */}
           <div className={styles.providerCard}>
             <div className={styles.cardHeader}>
               <div className={styles.providerIdentity}>
@@ -240,7 +353,7 @@ export default function ProvidersPage() {
                 <div>
                   <div className={styles.providerTitleRow}>
                     <h3>Google AI Studio</h3>
-                    <span className={styles.optionalBadge}>Secondary</span>
+                    <span className={styles.cloudBadge}>Cloud Provider</span>
                   </div>
                   <span className={styles.providerType}>Gemini Cloud Provider</span>
                 </div>

@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-19T09:39:35.748Z",
-  "currentVersion": "v0.6",
+  "generatedAt": "2026-11-19T09:56:44.181Z",
+  "currentVersion": "v0.7",
   "currentMajor": 0,
-  "totalVersions": 6,
+  "totalVersions": 7,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -23,6 +23,176 @@
     }
   ],
   "versions": [
+    {
+      "version": "v0.7",
+      "major": 0,
+      "sequence": 7,
+      "commitHash": "277297e7505e1f8b5362d8ca9eb695080883ebf5",
+      "shortCommitHash": "277297e",
+      "subject": "Versions",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T15:11:07+05:30",
+      "committedAt": "2026-11-19T15:11:07+05:30",
+      "changeType": [
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/architecture/APPLICATION_VERSION_HISTORY.md",
+        "docs/implementation/2026-11-19-application-version-history-system.md",
+        "docs/reference/YVS_APPLICATION_VERSION_HISTORY_STANDARD.md",
+        "package.json",
+        "scripts/generate-version-history.ts",
+        "src/app/(app)/about/page.tsx",
+        "src/app/(public)/PublicLayout.module.css",
+        "src/app/(public)/offline/Offline.module.css",
+        "src/app/(public)/sign-in/page.tsx",
+        "src/app/(public)/versions/Versions.module.css",
+        "src/app/(public)/versions/VersionsClient.tsx",
+        "src/app/(public)/versions/layout.tsx",
+        "src/app/(public)/versions/page.tsx",
+        "src/app/api/versions/route.ts",
+        "src/components/navigation/AppNav.tsx",
+        "src/generated/version-history.json",
+        "src/lib/versions/generator.ts",
+        "src/lib/versions/types.ts",
+        "src/middleware.ts",
+        "tests/versions/version-generator.test.ts",
+        "tests/versions/version-routes.test.ts",
+        "tsconfig.json",
+        "versions/README.md",
+        "versions/major-version.json"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/architecture/APPLICATION_VERSION_HISTORY.md",
+          "insertions": 221,
+          "deletions": 0
+        },
+        {
+          "path": "docs/implementation/2026-11-19-application-version-history-system.md",
+          "insertions": 530,
+          "deletions": 0
+        },
+        {
+          "path": "docs/reference/YVS_APPLICATION_VERSION_HISTORY_STANDARD.md",
+          "insertions": 319,
+          "deletions": 0
+        },
+        {
+          "path": "package.json",
+          "insertions": 3,
+          "deletions": 1
+        },
+        {
+          "path": "scripts/generate-version-history.ts",
+          "insertions": 50,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/about/page.tsx",
+          "insertions": 5,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/PublicLayout.module.css",
+          "insertions": 1,
+          "deletions": 3
+        },
+        {
+          "path": "src/app/(public)/offline/Offline.module.css",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/sign-in/page.tsx",
+          "insertions": 5,
+          "deletions": 1
+        },
+        {
+          "path": "src/app/(public)/versions/Versions.module.css",
+          "insertions": 714,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/versions/VersionsClient.tsx",
+          "insertions": 552,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/versions/layout.tsx",
+          "insertions": 15,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(public)/versions/page.tsx",
+          "insertions": 11,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/api/versions/route.ts",
+          "insertions": 13,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/navigation/AppNav.tsx",
+          "insertions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 735,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/versions/generator.ts",
+          "insertions": 356,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/versions/types.ts",
+          "insertions": 112,
+          "deletions": 0
+        },
+        {
+          "path": "src/middleware.ts",
+          "insertions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "tests/versions/version-generator.test.ts",
+          "insertions": 273,
+          "deletions": 0
+        },
+        {
+          "path": "tests/versions/version-routes.test.ts",
+          "insertions": 81,
+          "deletions": 0
+        },
+        {
+          "path": "tsconfig.json",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "versions/README.md",
+          "insertions": 109,
+          "deletions": 0
+        },
+        {
+          "path": "versions/major-version.json",
+          "insertions": 16,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 24,
+      "insertions": 4127,
+      "deletions": 5,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
     {
       "version": "v0.6",
       "major": 0,

@@ -1,0 +1,556 @@
+.root {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-muted-foreground);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 150ms ease;
+  margin-bottom: var(--space-2);
+  width: fit-content;
+}
+
+.backLink:hover {
+  color: var(--color-foreground);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.primaryBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border-radius: var(--radius-sm);
+}
+
+.description {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  max-width: 800px;
+}
+
+/* ── Section Cards ────────────────────────────────────────── */
+.sectionCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-3);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.sectionDesc {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Overview Grid ────────────────────────────────────────── */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.overviewTile {
+  background-color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.overviewTileLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+  font-weight: 600;
+}
+
+.overviewTileValue {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+}
+
+/* ── Stepper (Setup Sequence) ─────────────────────────────── */
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.stepNumber {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stepCompleted {
+  background-color: rgba(22, 128, 60, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(22, 128, 60, 0.3);
+}
+
+.stepCurrent {
+  background-color: rgba(75, 0, 132, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(75, 0, 132, 0.3);
+}
+
+.stepPending {
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border: 1px solid var(--color-border);
+}
+
+.stepText {
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.stepStatus {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+/* ── Diagnostics Grid ─────────────────────────────────────── */
+.diagGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .diagGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.diagItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.diagItem:last-child {
+  border-bottom: none;
+}
+
+.diagLabel {
+  color: var(--color-muted-foreground);
+}
+
+.diagValue {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.storageBar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--color-muted);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+
+.storageProgress {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  transition: width 0.3s ease;
+}
+
+/* ── Model Catalogue Cards ────────────────────────────────── */
+.modelGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.modelCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background-color: var(--color-card);
+  transition: border-color 150ms ease;
+}
+
+.modelCardActive {
+  border-color: var(--color-primary);
+  background: linear-gradient(to bottom right, var(--color-card), var(--color-secondary));
+}
+
+.modelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.modelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.modelName {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.modelDesc {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+.modelSpecs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-2);
+  background-color: var(--color-muted);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+}
+
+.specItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.specLabel {
+  color: var(--color-muted-foreground);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+}
+
+.specValue {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.progressBarContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background-color: var(--color-muted);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--color-primary);
+  transition: width 0.2s ease;
+}
+
+.modelActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+/* ── Inference Mode Selector Cards ────────────────────────── */
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.modeCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background-color: var(--color-card);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  position: relative;
+}
+
+.modeCard:hover {
+  border-color: var(--color-primary);
+}
+
+.modeCardSelected {
+  border-color: var(--color-primary);
+  background-color: var(--color-secondary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.modeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modeTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.modeDesc {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+/* ── Inference Test Interface ─────────────────────────────── */
+.testForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.promptInput {
+  width: 100%;
+  padding: var(--space-3);
+  font-size: 0.875rem;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-muted);
+  color: var(--color-foreground);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.promptInput:focus {
+  outline: none;
+  border-color: var(--color-ring);
+}
+
+.quickPrompts {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.quickPromptBtn {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  background-color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+
+.quickPromptBtn:hover {
+  color: var(--color-foreground);
+  border-color: var(--color-ring);
+}
+
+.testResultBox {
+  background-color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.testResponse {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-foreground);
+  background-color: var(--color-card);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-2);
+  font-size: 0.75rem;
+}
+
+.metricTile {
+  background-color: var(--color-card);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.metricTileLabel {
+  color: var(--color-muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.metricTileValue {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-top: 2px;
+}
+
+/* ── Badges & Pills ───────────────────────────────────────── */
+.badgeSuccess {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(22, 128, 60, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(22, 128, 60, 0.3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.badgeWarning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(161, 92, 0, 0.15);
+  color: var(--color-warning);
+  border: 1px solid rgba(161, 92, 0, 0.3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.badgeMuted {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.privacyCallout {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: rgba(75, 0, 132, 0.08);
+  border: 1px solid rgba(75, 0, 132, 0.25);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-foreground);
+}

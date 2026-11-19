@@ -8,6 +8,8 @@
  */
 
 import { LiteRTEngine } from './litert-engine';
+import { LocalModelManager } from './model-manager';
+import { LocalAIConfig } from './local-ai-config';
 import type {
   UnifiedInferenceRequest,
   UnifiedInferenceResult,
@@ -25,17 +27,41 @@ function getLocalEngine(): LiteRTEngine {
 
 export class InferenceRouter {
   /**
-   * Execute inference respecting strict mode boundaries.
+   * Execute inference respecting strict mode boundaries:
+   * - 'local': strictly executes on-device via LiteRT-LM (no cloud fallback).
+   * - 'auto': prefers on-device when a ready model is available, otherwise uses cloud.
+   * - 'cloud': uses server-side vaulted BYOK cloud provider.
    */
   static async route(request: UnifiedInferenceRequest): Promise<UnifiedInferenceResult> {
-    // ─── STRICT LOCAL MODE ──────────────────────────────────────────
-    if (request.mode === 'local' || request.provider === 'local-litert') {
+    // ─── 1. AUTOMATIC MODE ──────────────────────────────────────────
+    if (request.mode === 'auto') {
+      const activeModelId = LocalAIConfig.getActiveModelId();
+      const record = LocalModelManager.getRecord(activeModelId);
+      if (record && record.status === 'ready') {
+        try {
+          const engine = getLocalEngine();
+          const { result } = await engine.generate({
+            ...request,
+            model: activeModelId,
+            provider: 'local-litert',
+            mode: 'local',
+          });
+          return result;
+        } catch (localErr) {
+          console.warn('[InferenceRouter] Auto mode local execution failed, falling back to cloud:', localErr);
+          // Fall through to cloud execution
+        }
+      }
+    }
+
+    // ─── 2. STRICT LOCAL MODE ───────────────────────────────────────
+    if (request.mode === 'local') {
       try {
         const engine = getLocalEngine();
         const { result } = await engine.generate(request);
         return result;
       } catch (err) {
-        // HARD PRIVACY INVARIANT: Never fall back to cloud silently!
+        // HARD PRIVACY INVARIANT: Never fall back to cloud silently in Local mode!
         const errMsg = err instanceof Error ? err.message : String(err);
         throw new Error(
           `Local on-device inference failed: ${errMsg}. Local mode strictly prohibits cloud fallback to protect your privacy.`
@@ -43,9 +69,10 @@ export class InferenceRouter {
       }
     }
 
-    // ─── CLOUD BYOK MODE ────────────────────────────────────────────
+    // ─── 3. CLOUD BYOK MODE ─────────────────────────────────────────
     const startTime = performance.now();
     const lastUserMessage = request.messages[request.messages.length - 1]?.content || '';
+    const cloudProvider = request.provider === 'local-litert' ? LocalAIConfig.getPreferredCloudProvider() : request.provider;
 
     const res = await fetch('/api/yai/generate', {
       method: 'POST',
@@ -54,7 +81,7 @@ export class InferenceRouter {
         prompt: lastUserMessage,
         message: lastUserMessage,
         model: request.model,
-        provider: request.provider,
+        provider: cloudProvider,
         systemPrompt: request.systemPrompt,
       }),
       signal: request.signal,
@@ -71,7 +98,7 @@ export class InferenceRouter {
     return {
       content: data.response || data.content || '',
       model: data.model || request.model,
-      provider: request.provider,
+      provider: cloudProvider,
       mode: 'cloud',
       executionEnvironment: 'server-vaulted',
       executionTimeMs: duration,

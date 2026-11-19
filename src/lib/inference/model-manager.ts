@@ -15,6 +15,7 @@ import type { InstalledModelRecord, ModelInstallationStatus } from './types';
 
 export class LocalModelManager {
   private static STORAGE_KEY = 'yai_local_models_v1';
+  private static activeDownloads: Map<string, boolean> = new Map();
 
   /**
    * List all models from catalog with current installation status.
@@ -84,11 +85,18 @@ export class LocalModelManager {
       throw new Error(`Model ${modelId} not found in catalog.`);
     }
 
+    this.activeDownloads.set(modelId, true);
+
     const caps = await detectDeviceCapabilities();
     if (caps.storage.quotaBytes > 0 && caps.storage.freeBytes < descriptor.downloadSizeBytes) {
+      this.activeDownloads.delete(modelId);
       throw new Error(
         `Insufficient storage space: ${Math.round(descriptor.downloadSizeBytes / 1024 / 1024)} MB required, but only ${Math.round(caps.storage.freeBytes / 1024 / 1024)} MB available.`
       );
+    }
+
+    if (!this.activeDownloads.get(modelId)) {
+      throw new Error('Download cancelled by user.');
     }
 
     let record: InstalledModelRecord = {
@@ -101,46 +109,71 @@ export class LocalModelManager {
     this.saveRecord(record);
     onProgress?.(record);
 
-    // Stream download progress in chunks (real progress simulation in browser)
-    const chunks = 10;
-    for (let i = 1; i <= chunks; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 80));
-      const percent = Math.round((i / chunks) * 90);
-      const downloaded = Math.round((percent / 100) * descriptor.downloadSizeBytes);
+    try {
+      // Stream download progress in chunks (real progress simulation in browser)
+      const chunks = 10;
+      for (let i = 1; i <= chunks; i++) {
+        if (!this.activeDownloads.get(modelId)) {
+          throw new Error('Download cancelled by user.');
+        }
 
+        await new Promise((resolve) => setTimeout(resolve, 80));
+
+        if (!this.activeDownloads.get(modelId)) {
+          throw new Error('Download cancelled by user.');
+        }
+
+        const percent = Math.round((i / chunks) * 90);
+        const downloaded = Math.round((percent / 100) * descriptor.downloadSizeBytes);
+
+        record = {
+          ...record,
+          status: 'downloading',
+          progressPercent: percent,
+          downloadedBytes: downloaded,
+        };
+        this.saveRecord(record);
+        onProgress?.(record);
+      }
+
+      // Integrity verification step
       record = {
         ...record,
-        status: 'downloading',
-        progressPercent: percent,
-        downloadedBytes: downloaded,
+        status: 'verifying',
+        progressPercent: 95,
       };
       this.saveRecord(record);
       onProgress?.(record);
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      if (!this.activeDownloads.get(modelId)) {
+        throw new Error('Download cancelled by user.');
+      }
+
+      // Finalize installation
+      record = {
+        ...record,
+        status: 'ready',
+        progressPercent: 100,
+        downloadedBytes: descriptor.downloadSizeBytes,
+        installedAt: new Date().toISOString(),
+      };
+      this.saveRecord(record);
+      onProgress?.(record);
+
+      return record;
+    } finally {
+      this.activeDownloads.delete(modelId);
     }
+  }
 
-    // Integrity verification step
-    record = {
-      ...record,
-      status: 'verifying',
-      progressPercent: 95,
-    };
-    this.saveRecord(record);
-    onProgress?.(record);
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Finalize installation
-    record = {
-      ...record,
-      status: 'ready',
-      progressPercent: 100,
-      downloadedBytes: descriptor.downloadSizeBytes,
-      installedAt: new Date().toISOString(),
-    };
-    this.saveRecord(record);
-    onProgress?.(record);
-
-    return record;
+  /**
+   * Cancel an in-progress model download.
+   */
+  static async cancelDownload(modelId: string): Promise<void> {
+    this.activeDownloads.set(modelId, false);
+    await this.deleteModel(modelId);
   }
 
   /**

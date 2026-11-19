@@ -108,3 +108,23 @@
   - `Local — On-Device (LiteRT-LM)` with shield icon.
   - `Cloud — OpenRouter` with cloud icon.
 - Interactive mode switcher in conversation header controls.
+
+---
+
+### Milestone 9: Integrate LiteRT-LM as First-Class AI Provider
+- Positioned **Go Local with LiteRT-LM** as the #1 Primary AI Provider on `/providers` with Primary Provider badge and dynamic status indicators (`not_set_up`, `device_compatible`, `model_required`, `model_downloading`, `ready`, `device_unsupported`, `error`).
+- Designated OpenRouter and Google AI Studio as secondary "Cloud Provider" options.
+- Implemented dedicated control panel at `/settings/yai-local` with all 7 comprehensive sections:
+  - **Section A (Overview)**: System status tiles, inference mode, active model, storage quota, hardware assessment.
+  - **Section B (Device Compatibility)**: Live diagnostic probes for WebGPU, GPU adapter, WASM SIMD, OPFS, IndexedDB, and browser storage quota with re-run action.
+  - **Section C (Local Model Catalogue)**: Vetted Gemma models, user-initiated chunked download, SHA-256 verification, cancellation, activation, and deletion.
+  - **Section D (Active Local Model)**: Active model specs, parameters, quantization, context window, storage consumed.
+  - **Section E (Local Inference Test)**: Interactive test prompt with presets, live hardware execution, latency and tokens/sec metrics, and zero-outbound-network assertion verification.
+  - **Section F (Privacy & Inference Mode)**: Selectable persistent modes (`Local Only`, `Automatic`, `Cloud Only`) with storage vs inference privacy distinction callout.
+  - **Section G (Setup Progress)**: 7-step onboarding checklist tracking setup from capability check to mode activation.
+- Created clean redirect from legacy `/settings/local-models` to `/settings/yai-local` to prevent 404s.
+- Updated `/settings` navigation link to point to `/settings/yai-local`.
+- Created `LocalAIConfig` central state service with reactive event dispatching.
+- Updated `InferenceRouter` with `'auto'` hybrid execution mode.
+- Synchronized conversation view with `LocalAIConfig` preference cycling.
+- Created `tests/inference/local-ai-provider.test.ts` (11 tests passing; 62 tests passing repository-wide).

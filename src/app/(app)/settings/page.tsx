@@ -304,7 +304,7 @@ export default function SettingsPage() {
               <Key size={14} />
               <span>Configure AI Provider Keys</span>
             </Button>
-            <Button href="/settings/local-models" variant="outline">
+            <Button href="/settings/yai-local" variant="outline">
               <Cpu size={14} />
               <span>Manage Local Models (LiteRT-LM)</span>
             </Button>

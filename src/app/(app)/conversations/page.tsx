@@ -24,6 +24,8 @@ import { formatMarkdown } from '@/lib/client/safe-markdown';
 import { useLocalStore } from '@/lib/storage/client/local-store-provider';
 import { usePWA } from '@/lib/pwa/pwa-context';
 import { InferenceRouter } from '@/lib/inference/inference-router';
+import { LocalAIConfig } from '@/lib/inference/local-ai-config';
+import { LocalModelManager } from '@/lib/inference/model-manager';
 import type { InferenceMode } from '@/lib/inference/types';
 import type { ConversationIndexEntry, Message, ConversationMeta } from '@/types/personal-intelligence';
 import styles from './Conversations.module.css';
@@ -38,7 +40,27 @@ export default function ConversationsPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [markdownTranscript, setMarkdownTranscript] = useState<string | null>(null);
   const [showMarkdown, setShowMarkdown] = useState(false);
-  const [inferenceMode, setInferenceMode] = useState<InferenceMode>('local');
+  const [inferenceMode, setInferenceMode] = useState<InferenceMode>(() => {
+    if (typeof window !== 'undefined') {
+      return LocalAIConfig.getInferenceMode();
+    }
+    return 'local';
+  });
+
+  useEffect(() => {
+    const unsubscribe = LocalAIConfig.subscribe(() => {
+      setInferenceMode(LocalAIConfig.getInferenceMode());
+    });
+    return unsubscribe;
+  }, []);
+
+  const cycleInferenceMode = () => {
+    const modes: InferenceMode[] = ['local', 'auto', 'cloud'];
+    const nextIdx = (modes.indexOf(inferenceMode) + 1) % modes.length;
+    const nextMode = modes[nextIdx];
+    setInferenceMode(nextMode);
+    LocalAIConfig.setInferenceMode(nextMode);
+  };
 
   // Mobile view state: when true on mobile, shows conversation view; when false, shows list
   const [showMobileChat, setShowMobileChat] = useState(false);
@@ -309,8 +331,12 @@ export default function ConversationsPage() {
 
     try {
       // 2. Execute Generation based on explicit Privacy Mode
-      if (inferenceMode === 'local') {
-        // STRICT LOCAL MODE: Zero cloud requests, executed on-device via LiteRT-LM
+      const activeModelId = LocalAIConfig.getActiveModelId();
+      const isLocalReady = LocalModelManager.getRecord(activeModelId)?.status === 'ready';
+      const shouldUseLocal = inferenceMode === 'local' || (inferenceMode === 'auto' && isLocalReady);
+
+      if (shouldUseLocal) {
+        // LOCAL / AUTO ON-DEVICE EXECUTION: Zero cloud requests, executed on-device via LiteRT-LM
         const updatedMsgs = [...messages, tempUserMsg].map((m) => ({
           role: m.role,
           content: m.content,
@@ -318,9 +344,9 @@ export default function ConversationsPage() {
 
         const result = await InferenceRouter.route({
           messages: updatedMsgs,
-          model: 'gemma-2-2b-it-int4',
+          model: activeModelId,
           provider: 'local-litert',
-          mode: 'local',
+          mode: inferenceMode,
           systemPrompt: 'You are YAI Studio Local Intelligence, running on-device via LiteRT-LM.',
         });
 
@@ -330,7 +356,7 @@ export default function ConversationsPage() {
           role: 'assistant',
           content: result.content,
           createdAt: new Date().toISOString(),
-          model: 'gemma-2-2b-it-int4',
+          model: activeModelId,
           provider: 'local-litert',
         };
 
@@ -339,7 +365,7 @@ export default function ConversationsPage() {
         if (adapter) {
           await adapter.appendMessage(
             activeId,
-            { role: 'assistant', content: result.content, model: 'gemma-2-2b-it-int4', provider: 'local-litert' },
+            { role: 'assistant', content: result.content, model: activeModelId, provider: 'local-litert' },
             { offline: !isOnline }
           ).catch(console.warn);
         }
@@ -532,14 +558,22 @@ export default function ConversationsPage() {
                 <div className={styles.headerMetaRow}>
                   <StatusBadge status={syncStatus} />
 
-                  {/* Persistent Execution Mode Badge (Milestone 8) */}
+                  {/* Persistent Execution Mode Badge */}
                   {inferenceMode === 'local' ? (
                     <span
                       className={styles.privacyPillLocal}
                       title="Strict Local Privacy Mode: On-device LiteRT-LM execution with zero cloud transmission"
                     >
                       <Shield size={11} aria-hidden="true" />
-                      <span>Local — On-Device (LiteRT-LM)</span>
+                      <span>Local Only (LiteRT-LM)</span>
+                    </span>
+                  ) : inferenceMode === 'auto' ? (
+                    <span
+                      className={styles.privacyPillAuto}
+                      title="Automatic Mode: Uses local LiteRT-LM when ready, with cloud fallback"
+                    >
+                      <Cpu size={11} aria-hidden="true" />
+                      <span>Automatic (Hybrid)</span>
                     </span>
                   ) : (
                     <span
@@ -563,12 +597,19 @@ export default function ConversationsPage() {
               <div className={styles.headerControls}>
                 <button
                   type="button"
-                  onClick={() => setInferenceMode((m) => (m === 'local' ? 'cloud' : 'local'))}
+                  onClick={cycleInferenceMode}
                   className={styles.modeToggleBtn}
                   title={`Switch inference mode (Currently ${inferenceMode.toUpperCase()})`}
                 >
                   <Cpu size={12} />
-                  <span>Mode: {inferenceMode === 'local' ? 'Local' : 'Cloud'}</span>
+                  <span>
+                    Mode:{' '}
+                    {inferenceMode === 'local'
+                      ? 'Local Only'
+                      : inferenceMode === 'auto'
+                      ? 'Automatic'
+                      : 'Cloud Only'}
+                  </span>
                 </button>
 
                 <button

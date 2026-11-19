@@ -6,7 +6,16 @@
 
 export type InferenceProviderType = 'local-litert' | 'openrouter' | 'google-ai';
 
-export type InferenceMode = 'local' | 'cloud';
+export type InferenceMode = 'local' | 'cloud' | 'auto';
+
+export type LocalProviderStatus =
+  | 'not_set_up'
+  | 'device_compatible'
+  | 'model_required'
+  | 'model_downloading'
+  | 'ready'
+  | 'device_unsupported'
+  | 'error';
 
 export type InferenceEnvironment = 'browser-device' | 'server-vaulted';
 
