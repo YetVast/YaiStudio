@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, ExternalLink, ArrowRight } from 'lucide-react';
+import { ShieldCheck, ExternalLink, ArrowRight, GitBranch } from 'lucide-react';
 import styles from './SignIn.module.css';
 
 export default function SignInPage({
@@ -62,6 +62,10 @@ async function SignInClient({
               <span>About Yet Vast Auth</span>
               <ExternalLink size={12} />
             </a>
+            <Link href="/versions" className={styles.link}>
+              <span>Version History</span>
+              <GitBranch size={12} />
+            </Link>
           </div>
         </div>
       </div>

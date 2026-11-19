@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = [
   '/sign-in',
+  '/versions',
+  '/api/versions',
   '/api/auth/authorize',
   '/api/auth/callback',
   '/api/auth/sign-out',

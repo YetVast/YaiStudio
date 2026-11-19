@@ -12,6 +12,7 @@ import {
   Plug,
   Cpu,
   Settings,
+  History,
 } from 'lucide-react';
 import styles from './AppNav.module.css';
 
@@ -28,6 +29,7 @@ const SYSTEM_NAV = [
   { href: '/apps',           label: 'Connected Apps',      icon: Plug },
   { href: '/providers',      label: 'AI Providers',        icon: Cpu },
   { href: '/settings',       label: 'Settings',            icon: Settings },
+  { href: '/versions',       label: 'Version History',     icon: History },
 ];
 
 function NavItem({
