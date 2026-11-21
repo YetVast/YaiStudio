@@ -23,6 +23,12 @@ import { detectDeviceCapabilities } from '@/lib/inference/device-capabilities';
 import { LocalModelManager } from '@/lib/inference/model-manager';
 import { LocalAIConfig } from '@/lib/inference/local-ai-config';
 import { getLocalModelDescriptor } from '@/lib/inference/local-model-registry';
+import {
+  OllamaClient,
+  type OllamaHealthReport,
+  type OllamaModelItem,
+  type OllamaRunningModel,
+} from '@/lib/inference/runtimes/ollama-client';
 import type { DeviceCapabilityReport, InstalledModelRecord, LocalProviderStatus } from '@/lib/inference/types';
 import styles from './Providers.module.css';
 
@@ -38,11 +44,48 @@ export default function ProvidersPage() {
   const [localRecords, setLocalRecords] = useState<InstalledModelRecord[]>([]);
   const [activeLocalModelId, setActiveLocalModelId] = useState<string>('gemma-4-e2b-it-web');
 
+  // Ollama Independent Provider State
+  const [ollamaEndpoint, setOllamaEndpoint] = useState<string>(OllamaClient.getEndpoint());
+  const [ollamaHealth, setOllamaHealth] = useState<OllamaHealthReport | null>(null);
+  const [ollamaModels, setOllamaModels] = useState<OllamaModelItem[]>([]);
+  const [ollamaRunning, setOllamaRunning] = useState<OllamaRunningModel[]>([]);
+  const [pingingOllama, setPingingOllama] = useState(false);
+  const [pingDurationMs, setPingDurationMs] = useState<number | null>(null);
+  const [lastPingTime, setLastPingTime] = useState<string | null>(null);
+  const [showOllamaModal, setShowOllamaModal] = useState(false);
+
   // Key entry state
   const [activeProvider, setActiveProvider] = useState<'openrouter' | 'google-ai' | null>(null);
   const [enteredKey, setEnteredKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [savingKey, setSavingKey] = useState(false);
+
+  const handlePingOllama = async (customEndpoint?: string) => {
+    setPingingOllama(true);
+    const start = performance.now();
+    try {
+      const endpoint = customEndpoint || ollamaEndpoint;
+      if (customEndpoint) {
+        OllamaClient.setEndpoint(customEndpoint);
+        setOllamaEndpoint(customEndpoint);
+      }
+      const health = await OllamaClient.checkHealth(endpoint);
+      const elapsed = Math.round(performance.now() - start);
+      setPingDurationMs(elapsed);
+      setLastPingTime(new Date().toLocaleTimeString());
+      setOllamaHealth(health);
+      if (health.available) {
+        const [models, running] = await Promise.all([
+          OllamaClient.listModels().catch(() => []),
+          OllamaClient.listRunningModels().catch(() => []),
+        ]);
+        setOllamaModels(models);
+        setOllamaRunning(running);
+      }
+    } finally {
+      setPingingOllama(false);
+    }
+  };
 
   const fetchProviders = async () => {
     setLoading(true);
@@ -62,6 +105,9 @@ export default function ProvidersPage() {
       const records = LocalModelManager.getModelRecords();
       setLocalRecords(records);
       setActiveLocalModelId(LocalAIConfig.getActiveModelId());
+
+      // Probe Ollama in background
+      handlePingOllama();
     } catch {
       setErrorMessage('Failed to load provider configuration');
     } finally {
@@ -265,7 +311,90 @@ export default function ProvidersPage() {
             </div>
           </div>
 
-          {/* Card 2: OpenRouter (Cloud Provider) */}
+          {/* Card 2: Ollama (Local Model Server) */}
+          <div className={`${styles.providerCard} ${styles.ollamaProviderCard}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.providerIdentity}>
+                <HardDrive size={20} className={styles.providerIcon} />
+                <div>
+                  <div className={styles.providerTitleRow}>
+                    <h3>Ollama</h3>
+                    <span className={styles.ollamaBadge}>Local Model Server</span>
+                  </div>
+                  <span className={styles.providerType}>Native Host Daemon</span>
+                </div>
+              </div>
+              <span
+                className={`${styles.statusPill} ${
+                  ollamaHealth?.available
+                    ? styles.statusConfigured
+                    : ollamaHealth?.state === 'ERROR'
+                    ? styles.statusPending
+                    : styles.statusUnconfigured
+                }`}
+              >
+                {ollamaHealth?.available
+                  ? `Connected (v${ollamaHealth.version})`
+                  : ollamaHealth?.state === 'ERROR'
+                  ? 'CORS Policy Block'
+                  : 'Disconnected'}
+              </span>
+            </div>
+
+            <p className={styles.providerDesc}>
+              Execute GGUF models on your local hardware via Ollama daemon. Runs independently of
+              browser-based LiteRT-LM with high-performance Metal and CUDA acceleration.
+            </p>
+
+            <div className={styles.keyDetails}>
+              <div className={styles.localInfoGrid}>
+                <div>
+                  <span className={styles.keyLabel}>Endpoint:</span>
+                  <code className={styles.maskedKey}>{ollamaEndpoint}</code>
+                </div>
+                <div>
+                  <span className={styles.keyLabel}>Installed:</span>
+                  <span className={styles.localInfoValue}>
+                    {ollamaHealth?.available ? `${ollamaModels.length} models` : 'Offline'}
+                  </span>
+                </div>
+                <div>
+                  <span className={styles.keyLabel}>VRAM Active:</span>
+                  <span className={styles.localInfoValue}>
+                    {ollamaRunning.length > 0 ? `${ollamaRunning.length} model in VRAM` : 'Standby'}
+                  </span>
+                </div>
+                {pingDurationMs !== null && (
+                  <div>
+                    <span className={styles.keyLabel}>Ping Latency:</span>
+                    <span className={styles.pingInfo}>{pingDurationMs} ms</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.cardFooter} style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePingOllama()}
+                disabled={pingingOllama}
+              >
+                <RefreshCw size={14} className={pingingOllama ? styles.spinner : ''} />
+                <span>{pingingOllama ? 'Pinging...' : 'Test Connection'}</span>
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowOllamaModal(true)}
+              >
+                <HardDrive size={14} />
+                <span>Manage Ollama</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Card 3: OpenRouter (Cloud Provider) */}
           <div className={styles.providerCard}>
             <div className={styles.cardHeader}>
               <div className={styles.providerIdentity}>
@@ -478,6 +607,151 @@ export default function ProvidersPage() {
               </Button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Ollama Management Modal */}
+      {showOllamaModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalLarge}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <HardDrive size={20} style={{ color: 'var(--color-primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Ollama Local Daemon Management</h3>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowOllamaModal(false)}>
+                Close
+              </Button>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '4px' }}>
+                Ollama Daemon Endpoint:
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={ollamaEndpoint}
+                  onChange={(e) => setOllamaEndpoint(e.target.value)}
+                  placeholder="http://127.0.0.1:11434"
+                  className={styles.keyInput}
+                />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handlePingOllama(ollamaEndpoint)}
+                  disabled={pingingOllama}
+                >
+                  <RefreshCw size={14} className={pingingOllama ? styles.spinner : ''} />
+                  <span>{pingingOllama ? 'Pinging...' : 'Save & Ping'}</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Connection Diagnostics */}
+            <div
+              style={{
+                padding: 'var(--space-3)',
+                borderRadius: 'var(--radius-sm)',
+                background: ollamaHealth?.available ? 'rgba(22, 128, 60, 0.08)' : 'rgba(198, 40, 40, 0.08)',
+                border: `1px solid ${ollamaHealth?.available ? 'rgba(22, 128, 60, 0.25)' : 'rgba(198, 40, 40, 0.25)'}`,
+                fontSize: '0.8125rem',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong>
+                  Status: {ollamaHealth?.available ? `Connected (v${ollamaHealth.version})` : 'Daemon Offline or Origin Blocked'}
+                </strong>
+                {pingDurationMs !== null && <span>Latency: {pingDurationMs} ms</span>}
+              </div>
+              {ollamaHealth?.error && <p style={{ margin: '4px 0 0', color: 'var(--color-destructive)' }}>{ollamaHealth.error}</p>}
+              {ollamaHealth?.troubleshooting && (
+                <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--color-foreground)' }}>
+                  <strong>Troubleshooting:</strong>
+                  <pre
+                    style={{
+                      background: 'var(--color-muted)',
+                      padding: '6px 8px',
+                      borderRadius: 'var(--radius-xs)',
+                      marginTop: '4px',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {ollamaHealth.troubleshooting}
+                  </pre>
+                </div>
+              )}
+            </div>
+
+            {/* Installed Models List */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <h4 style={{ margin: 0, fontSize: '0.9375rem' }}>
+                  Installed Models on Local Host ({ollamaModels.length})
+                </h4>
+                <Button variant="outline" size="sm" onClick={() => handlePingOllama()} disabled={pingingOllama}>
+                  <RefreshCw size={12} className={pingingOllama ? styles.spinner : ''} />
+                  <span>Refresh</span>
+                </Button>
+              </div>
+
+              {ollamaModels.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 'var(--space-6)', background: 'var(--color-muted)', borderRadius: 'var(--radius-sm)', fontSize: '0.8125rem', color: 'var(--color-muted-foreground)' }}>
+                  {ollamaHealth?.available
+                    ? 'No models pulled yet in Ollama. Pull a model using: ollama run llama3.2'
+                    : 'Connect to Ollama daemon to inspect installed models.'}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {ollamaModels.map((m) => {
+                    const isRunning = ollamaRunning.some((r) => r.name === m.name || r.model === m.name);
+                    return (
+                      <div key={m.name} className={styles.modelItemCard}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <strong style={{ fontFamily: 'var(--font-mono)' }}>{m.name}</strong>
+                            {isRunning && (
+                              <span style={{ fontSize: '0.6875rem', fontWeight: 600, padding: '1px 6px', background: 'rgba(22, 128, 60, 0.15)', color: 'var(--color-success)', borderRadius: 'var(--radius-xs)' }}>
+                                Active in VRAM
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-muted-foreground)', marginTop: '2px' }}>
+                            Family: {m.details?.family || 'GGUF'} • Size: {(m.size / (1024 * 1024 * 1024)).toFixed(2)} GB • Quant: {m.details?.quantization_level || 'standard'}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          {isRunning && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                await OllamaClient.unloadModel(m.name);
+                                handlePingOllama();
+                              }}
+                            >
+                              <span>Unload VRAM</span>
+                            </Button>
+                          )}
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                              LocalAIConfig.setActiveModelId(m.name, 'ollama');
+                              setShowOllamaModal(false);
+                            }}
+                          >
+                            <span>Select as Active</span>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

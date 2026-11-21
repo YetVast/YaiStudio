@@ -1088,3 +1088,191 @@
   overflow-x: auto;
 }
 
+/* ─── 6-Layer LiteRT-LM Health System ─────────────────────── */
+.layersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.layerCard {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.layerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.layerNumber {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+}
+
+.layerTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.layerDetails {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.healthHeadlineCard {
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.headlineRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.headlineText {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+/* ─── Installed Models in OPFS ────────────────────────────── */
+.installedSection {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.installedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.installedItemCard {
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.installedItemActive {
+  border-color: var(--color-primary);
+  background: rgba(75, 0, 132, 0.06);
+}
+
+/* ─── 5-Group Memory Telemetry ────────────────────────────── */
+.memoryGroupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.memoryGroupBox {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.memoryGroupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.memoryGroupTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.dataPillMeasured {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  background: rgba(22, 128, 60, 0.15);
+  color: var(--color-success);
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(22, 128, 60, 0.3);
+}
+
+.dataPillEstimated {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  background: rgba(161, 92, 0, 0.15);
+  color: var(--color-warning);
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(161, 92, 0, 0.3);
+}
+
+.dataPillUnavailable {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--color-border);
+}
+
+.memoryStatRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+
+.memoryStatLabel {
+  color: var(--color-muted-foreground);
+}
+
+.memoryStatValue {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+

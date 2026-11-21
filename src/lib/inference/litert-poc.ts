@@ -1,9 +1,9 @@
 /**
- * YAI Studio V1 — Milestone 6: LiteRT-LM Proof of Concept
+ * YAI Studio V1 — LiteRT-LM Execution Harness
  *
  * Technical verification harness demonstrating:
  * 1. Runtime initialization & capability detection
- * 2. Model descriptor loading
+ * 2. Model descriptor loading & OPFS verification
  * 3. Local prompt execution
  * 4. Response generation
  * 5. Complete isolation: Zero outbound cloud inference requests
@@ -11,7 +11,7 @@
  */
 
 import { LiteRTEngine } from './litert-engine';
-import type { LocalInferenceMeasurement, UnifiedInferenceResult } from './types';
+import type { LocalInferenceMeasurement } from './types';
 
 export interface PocExecutionReport {
   success: boolean;
@@ -28,8 +28,8 @@ export async function runLiteRTPoc(options: {
   modelId?: string;
   prompt?: string;
 } = {}): Promise<PocExecutionReport> {
-  const modelId = options.modelId || 'gemma-2-2b-it-int4';
-  const prompt = options.prompt || 'Hello! What is YAI Studio and how do you protect my privacy?';
+  const modelId = options.modelId || 'gemma-4-e2b-it-web';
+  const prompt = options.prompt || 'What is the capital of India? Answer in one sentence.';
 
   let outboundRequestsCount = 0;
   const originalFetch = globalThis.fetch;
