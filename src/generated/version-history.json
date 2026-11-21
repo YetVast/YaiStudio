@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-19T16:17:40.179Z",
-  "currentVersion": "v0.12",
+  "generatedAt": "2026-11-21T12:27:04.089Z",
+  "currentVersion": "v0.16",
   "currentMajor": 0,
-  "totalVersions": 12,
+  "totalVersions": 16,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -23,6 +23,247 @@
     }
   ],
   "versions": [
+    {
+      "version": "v0.16",
+      "major": 0,
+      "sequence": 16,
+      "commitHash": "883b413795dc8700a85875aa3e88200423160af6",
+      "shortCommitHash": "883b413",
+      "subject": "feat(local-ai): OPFS model storage, streaming download, SHA-256 verifier",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-20T19:46:56+05:30",
+      "committedAt": "2026-11-20T19:46:56+05:30",
+      "changeType": [
+        "feature",
+        "test"
+      ],
+      "changedFiles": [
+        "src/lib/inference/model-downloader.ts",
+        "src/lib/inference/model-manager.ts",
+        "src/lib/inference/model-storage.ts",
+        "src/lib/inference/sha256-stream.ts",
+        "tests/inference/sha256-stream.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "src/lib/inference/model-downloader.ts",
+          "insertions": 350,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/model-manager.ts",
+          "insertions": 221,
+          "deletions": 76
+        },
+        {
+          "path": "src/lib/inference/model-storage.ts",
+          "insertions": 233,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/sha256-stream.ts",
+          "insertions": 94,
+          "deletions": 0
+        },
+        {
+          "path": "tests/inference/sha256-stream.test.ts",
+          "insertions": 73,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 5,
+      "insertions": 971,
+      "deletions": 76,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.15",
+      "major": 0,
+      "sequence": 15,
+      "commitHash": "e2ecb2ab978a8eb44779697046395134618c2f79",
+      "shortCommitHash": "e2ecb2a",
+      "subject": "Loc ai",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T23:45:24+05:30",
+      "committedAt": "2026-11-19T23:45:24+05:30",
+      "changeType": [
+        "test"
+      ],
+      "changedFiles": [
+        "src/lib/inference/local-ai-config.ts",
+        "tests/inference/local-ai-provider.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "src/lib/inference/local-ai-config.ts",
+          "insertions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "tests/inference/local-ai-provider.test.ts",
+          "insertions": 3,
+          "deletions": 2
+        }
+      ],
+      "filesChanged": 2,
+      "insertions": 5,
+      "deletions": 4,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.14",
+      "major": 0,
+      "sequence": 14,
+      "commitHash": "d87e07b6d1448b2bbe18af6fd1faa3e86f365df0",
+      "shortCommitHash": "d87e07b",
+      "subject": "Litertlm 1",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T23:36:40+05:30",
+      "committedAt": "2026-11-19T23:36:40+05:30",
+      "changeType": [
+        "maintenance"
+      ],
+      "changedFiles": [
+        "package-lock.json",
+        "package.json",
+        "src/lib/inference/local-model-registry.ts",
+        "src/lib/inference/types.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "package-lock.json",
+          "insertions": 16,
+          "deletions": 0
+        },
+        {
+          "path": "package.json",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/local-model-registry.ts",
+          "insertions": 67,
+          "deletions": 18
+        },
+        {
+          "path": "src/lib/inference/types.ts",
+          "insertions": 54,
+          "deletions": 15
+        }
+      ],
+      "filesChanged": 4,
+      "insertions": 138,
+      "deletions": 33,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.13",
+      "major": 0,
+      "sequence": 13,
+      "commitHash": "e2e253d6356a340c6895cf40ecc5303b23c9f607",
+      "shortCommitHash": "e2e253d",
+      "subject": "feat(ui): consolidate global navbar, add conversation info sidebar, and reorganize local AI setup",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-19T21:48:06+05:30",
+      "committedAt": "2026-11-19T21:48:06+05:30",
+      "changeType": [
+        "feature",
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-19-ui-consistency-navigation-consolidation-responsive-ux.md",
+        "src/app/(app)/conversations/Conversations.module.css",
+        "src/app/(app)/conversations/page.tsx",
+        "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+        "src/app/(app)/settings/yai-local/page.tsx",
+        "src/app/versions/Versions.module.css",
+        "src/app/versions/VersionsClient.tsx",
+        "src/app/versions/layout.tsx",
+        "src/components/layout/AppShell.module.css",
+        "src/components/layout/AppShell.tsx",
+        "src/generated/version-history.json",
+        "tests/navigation/ui-consistency-navigation.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-19-ui-consistency-navigation-consolidation-responsive-ux.md",
+          "insertions": 594,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/conversations/Conversations.module.css",
+          "insertions": 268,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/conversations/page.tsx",
+          "insertions": 282,
+          "deletions": 86
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+          "insertions": 277,
+          "deletions": 1
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/page.tsx",
+          "insertions": 1076,
+          "deletions": 590
+        },
+        {
+          "path": "src/app/versions/Versions.module.css",
+          "insertions": 0,
+          "deletions": 94
+        },
+        {
+          "path": "src/app/versions/VersionsClient.tsx",
+          "insertions": 0,
+          "deletions": 34
+        },
+        {
+          "path": "src/app/versions/layout.tsx",
+          "insertions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/components/layout/AppShell.module.css",
+          "insertions": 0,
+          "deletions": 88
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "insertions": 6,
+          "deletions": 57
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 191,
+          "deletions": 11
+        },
+        {
+          "path": "tests/navigation/ui-consistency-navigation.test.ts",
+          "insertions": 103,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 12,
+      "insertions": 2799,
+      "deletions": 963,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
     {
       "version": "v0.12",
       "major": 0,

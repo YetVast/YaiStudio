@@ -33,6 +33,7 @@ import {
 } from './model-storage';
 import { getLocalModelDescriptor, isModelSupported } from './local-model-registry';
 import type { InstalledModelRecord } from './types';
+import { processTelemetry } from '../telemetry/process-telemetry';
 
 // Needed to access the per-model OPFS directory handle with create flag
 // model-storage exports getModelDir but not all its internals — we re-use
@@ -154,12 +155,41 @@ export async function downloadModel(
   const controller = new AbortController();
   activeControllers.set(modelId, controller);
 
+  const telemetryProc = processTelemetry.startProcess({
+    operationType: 'model-download',
+    operationName: `Download ${descriptor.name}`,
+    provider: 'local-litert',
+    runtime: 'litert-lm',
+    model: modelId,
+    canCancel: true,
+    initialStage: 'Starting OPFS stream',
+  });
+  processTelemetry.registerCancelHandler(telemetryProc.id, async () => {
+    await cancelDownload(modelId);
+  });
+
+  const wrappedProgress = (evt: DownloadProgressEvent) => {
+    onProgress?.(evt);
+    const stage = evt.status === 'verifying' ? 'Verifying SHA-256' : `Streaming (${(evt.downloadSpeedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s)`;
+    processTelemetry.updateProgress(telemetryProc.id, evt.progressPercent, stage);
+  };
+
   try {
-    const result = await runDownload(modelId, descriptor.downloadUrl, descriptor.sha256, descriptor.downloadSizeBytes, controller.signal, onProgress, startMs);
+    const result = await runDownload(modelId, descriptor.downloadUrl, descriptor.sha256, descriptor.downloadSizeBytes, controller.signal, wrappedProgress, startMs);
+    if (result.success) {
+      processTelemetry.completeProcess(telemetryProc.id, { durationMs: result.durationMs }, 'Model installed and verified in OPFS');
+    } else {
+      processTelemetry.failProcess(telemetryProc.id, result.error || 'Download failed');
+    }
     return result;
   } catch (err) {
     await cleanupTmpFile(modelId);
     const msg = err instanceof Error ? err.message : String(err);
+    if (controller.signal.aborted) {
+      processTelemetry.cancelProcess(telemetryProc.id);
+    } else {
+      processTelemetry.failProcess(telemetryProc.id, msg);
+    }
     onProgress?.({
       modelId,
       status: 'error',

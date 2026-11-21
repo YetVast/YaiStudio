@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useId } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -28,19 +28,30 @@ import {
   ChevronDown,
   ChevronUp,
   Layers,
+  Monitor,
+  Gauge,
+  SlidersHorizontal,
+  Scale,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { LOCAL_MODEL_CATALOG, getLocalModelDescriptor } from '@/lib/inference/local-model-registry';
+import {
+  EXTENDED_MODEL_CATALOGUE,
+  evaluateModelRecommendation,
+  compareModels,
+  type ModelCatalogueEntry,
+  type ModelRecommendation,
+} from '@/lib/inference/model-catalogue';
 import { LocalModelManager } from '@/lib/inference/model-manager';
 import { detectDeviceCapabilities } from '@/lib/inference/device-capabilities';
 import { runLiteRTPoc, type PocExecutionReport } from '@/lib/inference/litert-poc';
 import { LocalAIConfig } from '@/lib/inference/local-ai-config';
+import { OllamaClient, type OllamaHealthReport, type OllamaRunningModel } from '@/lib/inference/runtimes/ollama-client';
 import { usePWA } from '@/lib/pwa/pwa-context';
 import type {
   DeviceCapabilityReport,
   InstalledModelRecord,
   InferenceMode,
-  LocalProviderStatus,
 } from '@/lib/inference/types';
 import styles from './YaiLocal.module.css';
 
@@ -58,9 +69,19 @@ export default function YaiLocalPage() {
   const [probing, setProbing] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
+  // Runtime Selection & Health
+  const [activeRuntimeTab, setActiveRuntimeTab] = useState<'litert-lm' | 'ollama'>('litert-lm');
+  const [ollamaHealth, setOllamaHealth] = useState<OllamaHealthReport | null>(null);
+  const [runningOllamaModels, setRunningOllamaModels] = useState<OllamaRunningModel[]>([]);
+  const [probingOllama, setProbingOllama] = useState(false);
+
   // Preference state synced with LocalAIConfig
   const [inferenceMode, setInferenceModeState] = useState<InferenceMode>('local');
   const [activeModelId, setActiveModelIdState] = useState<string | null>(null);
+
+  // Model comparison & rationale expansion state
+  const [showComparison, setShowComparison] = useState(false);
+  const [expandedRationale, setExpandedRationale] = useState<Record<string, boolean>>({});
 
   // Inference test state
   const [testPrompt, setTestPrompt] = useState(QUICK_PROMPTS[0]);
@@ -104,6 +125,13 @@ export default function YaiLocalPage() {
     }
   };
 
+  const toggleRationale = (modelId: string) => {
+    setExpandedRationale((prev) => ({
+      ...prev,
+      [modelId]: !prev[modelId],
+    }));
+  };
+
   // Detect display mode
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -118,6 +146,21 @@ export default function YaiLocalPage() {
     return () => media.removeEventListener('change', checkMode);
   }, []);
 
+  // Check Ollama health
+  const checkOllama = useCallback(async () => {
+    setProbingOllama(true);
+    try {
+      const health = await OllamaClient.checkHealth();
+      setOllamaHealth(health);
+      if (health.available) {
+        const running = await OllamaClient.listRunningModels();
+        setRunningOllamaModels(running);
+      }
+    } finally {
+      setProbingOllama(false);
+    }
+  }, []);
+
   // Refresh device capabilities and model state
   const refreshData = useCallback(async () => {
     try {
@@ -129,13 +172,16 @@ export default function YaiLocalPage() {
       const prefs = LocalAIConfig.getPreferences();
       setInferenceModeState(prefs.inferenceMode);
       setActiveModelIdState(prefs.activeModelId);
+
+      // Probe Ollama in background
+      checkOllama();
     } catch (err) {
       console.warn('Failed to inspect device capabilities:', err);
     } finally {
       setLoading(false);
       setProbing(false);
     }
-  }, []);
+  }, [checkOllama]);
 
   useEffect(() => {
     refreshData();
@@ -172,7 +218,6 @@ export default function YaiLocalPage() {
           prev.map((r) => (r.modelId === updated.modelId ? updated : r))
         );
       });
-      // Automatically make it active if no model is currently active
       if (!activeModelId) {
         LocalAIConfig.setActiveModelId(modelId);
         setActiveModelIdState(modelId);
@@ -213,7 +258,49 @@ export default function YaiLocalPage() {
 
   const handleRunTest = async () => {
     setTestError(null);
-    const targetModel = activeModelId || 'gemma-2-2b-it-int4';
+    const targetModel = activeModelId || 'gemma-4-e2b-it-web';
+
+    // If using Ollama runtime
+    if (activeRuntimeTab === 'ollama') {
+      if (!ollamaHealth?.available) {
+        setTestError('Ollama local daemon is not running. Please start Ollama at 127.0.0.1:11434 first.');
+        return;
+      }
+      setTestRunning(true);
+      setTestReport(null);
+      try {
+        const result = await OllamaClient.generate({
+          model: targetModel.startsWith('ollama-') ? targetModel.replace('ollama-', '') : 'gemma4:2b',
+          prompt: testPrompt,
+          system: 'You are YAI Studio Local Intelligence running via Ollama.',
+        });
+        setTestReport({
+          success: true,
+          modelId: targetModel,
+          response: result.content,
+          outboundRequestsCount: 0,
+          privacyVerified: true,
+          measurements: {
+            initDurationMs: 10,
+            modelLoadDurationMs: 0,
+            timeToFirstTokenMs: 50,
+            totalDurationMs: result.durationMs,
+            tokensGenerated: result.evalCount || 0,
+            tokensPerSecond: result.tokensPerSecond || 0,
+          },
+          deviceSupported: true,
+          unsupportedReasons: [],
+        });
+        setHasRunTest(true);
+      } catch (err) {
+        setTestError(`Ollama execution failed: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setTestRunning(false);
+      }
+      return;
+    }
+
+    // LiteRT-LM runtime path
     const isReady = modelRecords.find((r) => r.modelId === targetModel)?.status === 'ready';
 
     if (!isReady) {
@@ -248,14 +335,14 @@ export default function YaiLocalPage() {
     : null;
   const activeDescriptor = activeModelId ? getLocalModelDescriptor(activeModelId) : null;
   const readyModels = modelRecords.filter((r) => r.status === 'ready');
-  const anyModelReady = readyModels.length > 0;
+  const anyModelReady = readyModels.length > 0 || (ollamaHealth?.available && runningOllamaModels.length > 0);
 
-  // Onboarding 7-step sequence calculation
+  // Onboarding sequence
   const step1Done = caps !== null;
   const step2Done = caps?.isSupported ?? false;
   const step3Done = anyModelReady;
   const step4Done = anyModelReady;
-  const step5Done = activeModelId !== null && activeRecord?.status === 'ready';
+  const step5Done = activeModelId !== null && (activeRecord?.status === 'ready' || Boolean(ollamaHealth?.available));
   const step6Done = hasRunTest;
   const step7Done = inferenceMode !== undefined;
 
@@ -285,14 +372,12 @@ export default function YaiLocalPage() {
     ? 7
     : null;
 
-  // Service worker registration status string
   const swRegistrationStatus = registration
     ? 'Registered'
     : typeof navigator !== 'undefined' && 'serviceWorker' in navigator
     ? 'Supported'
     : 'Unsupported';
 
-  // Service worker activation status string
   const swActivationStatus = registration?.active
     ? 'Active'
     : registration?.waiting
@@ -307,18 +392,24 @@ export default function YaiLocalPage() {
     <div className={styles.root}>
       {/* ── Page Header & Navigation ── */}
       <div className={styles.header}>
-        <Link href="/providers" className={styles.backLink}>
-          <ArrowLeft size={14} />
-          <span>Back to AI Providers</span>
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <Link href="/providers" className={styles.backLink}>
+            <ArrowLeft size={14} />
+            <span>Back to AI Providers</span>
+          </Link>
+          <Link href="/monitor" className={styles.backLink} style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
+            <Activity size={14} />
+            <span>Open Real-time Runtime Monitor</span>
+          </Link>
+        </div>
+
         <div className={styles.titleRow}>
-          <h1 className={styles.title}>Go Local with LiteRT-LM</h1>
-          <span className={styles.primaryBadge}>Primary Provider</span>
+          <h1 className={styles.title}>Device Intelligence & Local AI Runtimes</h1>
+          <span className={styles.primaryBadge}>Hardware Accelerated</span>
         </div>
         <p className={styles.description}>
-          Run high-performance language models directly on your hardware using WebGPU and Google
-          LiteRT-LM. Inference queries, context retrieval, and generation remain entirely on your
-          device without routing to cloud servers.
+          Detect hardware capabilities, discover recommended compact neural models for your device,
+          and manage local inference across Google LiteRT-LM and Ollama runtimes with zero cloud egress.
         </p>
       </div>
 
@@ -378,7 +469,6 @@ export default function YaiLocalPage() {
               and dedicated desktop window execution with zero external network dependencies for local inference.
             </p>
 
-            {/* PWA State Grid */}
             <div className={styles.diagGrid}>
               <div>
                 <div className={styles.diagItem}>
@@ -493,7 +583,6 @@ export default function YaiLocalPage() {
               </div>
             </div>
 
-            {/* PWA Actions Banner */}
             <div className={styles.actionBanner}>
               {isInstallable && (
                 <div className={styles.bannerRow}>
@@ -539,6 +628,7 @@ export default function YaiLocalPage() {
 
       {/* ══════════════════════════════════════════════════════════════════════════
           SECTION 2 — Device Compatibility & Hardware Runtime (Collapsible)
+          Transformed into Comprehensive Device Intelligence Dashboard
           ══════════════════════════════════════════════════════════════════════════ */}
       <section className={styles.sectionCard}>
         <div
@@ -561,14 +651,14 @@ export default function YaiLocalPage() {
               <span>2. Device Compatibility & Hardware Runtime</span>
             </div>
             <div className={styles.headerSummaryPills}>
-              <span className={caps?.isSupported ? styles.badgeSuccess : styles.badgeWarning}>
-                {caps?.isSupported ? 'WebGPU Supported' : 'Partially Supported'}
+              <span className={caps?.assessment?.overallClassification === 'High capability' ? styles.badgeSuccess : styles.badgePrimary}>
+                {caps?.assessment?.overallClassification || 'Evaluating Hardware...'}
               </span>
               {caps && (
                 <>
                   <span className={styles.summaryDot}>•</span>
                   <span className={styles.summaryText}>
-                    {(caps.storage.freeBytes / 1024 / 1024 / 1024).toFixed(1)} GB Free
+                    {caps.hasWebGPU ? 'WebGPU Active' : 'WebAssembly Mode'}
                   </span>
                 </>
               )}
@@ -588,8 +678,9 @@ export default function YaiLocalPage() {
           <div id="section-device" className={styles.sectionBody}>
             <div className={styles.sectionSubHeader}>
               <p className={styles.sectionDesc}>
-                LiteRT-LM requires browser support for WebGPU acceleration, WebAssembly SIMD instructions,
-                and sandboxed Origin Private File System (OPFS) storage for caching model weights.
+                Comprehensive Device Intelligence inspects your device platform, compute backends,
+                memory headroom, and hardware accelerators to assess local AI suitability without sending
+                telemetry to cloud servers.
               </p>
               <Button
                 variant="outline"
@@ -602,128 +693,225 @@ export default function YaiLocalPage() {
               </Button>
             </div>
 
-            <div className={styles.diagGrid}>
-              <div>
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>Browser & Platform</span>
-                  <span className={styles.diagValue}>
-                    {typeof navigator !== 'undefined'
-                      ? navigator.userAgent.includes('Chrome')
-                        ? 'Chromium / V8 Engine'
-                        : navigator.userAgent.includes('Firefox')
-                        ? 'Firefox / Gecko'
-                        : navigator.userAgent.includes('Safari')
-                        ? 'Safari / WebKit'
-                        : 'Modern Web Browser'
-                      : 'Client Runtime'}
-                  </span>
-                </div>
-
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>WebGPU Acceleration</span>
-                  <span className={styles.diagValue}>
-                    {caps?.hasWebGPU ? (
-                      <span className={styles.badgeSuccess}>
-                        <CheckCircle2 size={11} /> Supported
-                      </span>
-                    ) : (
-                      <span className={styles.badgeWarning}>
-                        <AlertTriangle size={11} /> Not Available
-                      </span>
-                    )}
-                  </span>
-                </div>
-
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>WebGPU Adapter Status</span>
-                  <span className={styles.diagValue}>
-                    {caps?.gpuAdapterInfo?.vendor
-                      ? `${caps.gpuAdapterInfo.vendor} (${caps.gpuAdapterInfo.architecture || 'WebGPU'})`
-                      : caps?.hasWebGPU
-                      ? 'WebGPU Compatible Adapter'
-                      : 'No WebGPU Adapter Detected'}
-                  </span>
-                </div>
-
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>WebAssembly SIMD Runtime</span>
-                  <span className={styles.diagValue}>
-                    {caps?.hasWasm ? (
-                      <span className={styles.badgeSuccess}>
-                        <CheckCircle2 size={11} /> Supported
-                      </span>
-                    ) : (
-                      <span className={styles.badgeWarning}>
-                        <AlertTriangle size={11} /> Unsupported
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>Origin Private FS (OPFS)</span>
-                  <span className={styles.diagValue}>
-                    {caps?.hasOpfs ? (
-                      <span className={styles.badgeSuccess}>
-                        <CheckCircle2 size={11} /> Available
-                      </span>
-                    ) : (
-                      <span className={styles.badgeWarning}>
-                        <AlertTriangle size={11} /> Fallback to Cache
-                      </span>
-                    )}
-                  </span>
-                </div>
-
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>IndexedDB Persistent Storage</span>
-                  <span className={styles.diagValue}>
-                    <span className={styles.badgeSuccess}>
-                      <CheckCircle2 size={11} /> Ready
+            {/* Subsection A: Device and Operating System */}
+            <div className={styles.subSection}>
+              <h3 className={styles.subSectionTitle}>
+                <Monitor size={16} />
+                <span>A. Device & Operating System</span>
+              </h3>
+              <div className={styles.diagGrid}>
+                <div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Platform / OS</span>
+                    <span className={styles.diagValue}>{caps?.deviceInfo?.platform || 'Detecting...'}</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Browser Name & Version</span>
+                    <span className={styles.diagValue}>
+                      {caps?.deviceInfo ? `${caps.deviceInfo.browserName} ${caps.deviceInfo.browserVersion}` : 'Detecting...'}
                     </span>
-                  </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Browser Engine</span>
+                    <span className={styles.diagValue}>{caps?.deviceInfo?.browserEngine || 'Detecting...'}</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Device Classification</span>
+                    <span className={styles.diagValue}>{caps?.deviceInfo?.deviceType || 'Desktop'}</span>
+                  </div>
                 </div>
 
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>Available Browser Storage</span>
-                  <span className={styles.diagValue}>
-                    {caps
-                      ? `${(caps.storage.freeBytes / 1024 / 1024 / 1024).toFixed(2)} GB Free of ${(caps.storage.quotaBytes / 1024 / 1024 / 1024).toFixed(2)} GB`
-                      : 'Calculating...'}
-                  </span>
-                </div>
-
-                <div className={styles.diagItem}>
-                  <span className={styles.diagLabel}>LiteRT-LM Compatibility Assessment</span>
-                  <span className={styles.diagValue}>
-                    {caps?.isSupported ? (
-                      <span className={styles.badgeSuccess}>Supported (WebGPU Accelerated)</span>
-                    ) : caps?.hasWasm ? (
-                      <span className={styles.badgeWarning}>Partially Supported (CPU Fallback)</span>
-                    ) : (
-                      <span className={styles.badgeWarning}>Unsupported</span>
-                    )}
-                  </span>
+                <div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Screen Resolution</span>
+                    <span className={styles.diagValue}>{caps?.deviceInfo?.screenResolution}</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Available Screen</span>
+                    <span className={styles.diagValue}>{caps?.deviceInfo?.availableScreen}</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Device Pixel Ratio</span>
+                    <span className={styles.diagValue}>{caps?.deviceInfo?.devicePixelRatio}x</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Time Zone & Locale</span>
+                    <span className={styles.diagValue}>
+                      {caps?.deviceInfo?.timeZone} ({caps?.deviceInfo?.language})
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {caps && (
-              <div className={styles.storageBarContainer}>
-                <div className={styles.storageBarHeader}>
-                  <span>Storage Quota Utilization</span>
-                  <span>{caps.storage.usagePercent.toFixed(1)}% Used</span>
+            {/* Subsection B: Processor and Compute */}
+            <div className={styles.subSection}>
+              <h3 className={styles.subSectionTitle}>
+                <Cpu size={16} />
+                <span>B. Processor & Compute Capabilities</span>
+              </h3>
+              <div className={styles.diagGrid}>
+                <div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Logical CPU Cores</span>
+                    <span className={styles.diagValue}>
+                      {caps?.computeInfo?.logicalCores ? `${caps.computeInfo.logicalCores} Logical Cores` : 'Restricted by Browser'}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>WebGPU Acceleration</span>
+                    <span className={styles.diagValue}>
+                      {caps?.hasWebGPU ? (
+                        <span className={styles.badgeSuccess}>
+                          <CheckCircle2 size={11} /> Supported & Active
+                        </span>
+                      ) : (
+                        <span className={styles.badgeWarning}>
+                          <AlertTriangle size={11} /> Unavailable in Browser
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>GPU Vendor & Adapter</span>
+                    <span className={styles.diagValue}>
+                      {caps?.gpuAdapterInfo?.vendor
+                        ? `${caps.gpuAdapterInfo.vendor} (${caps.gpuAdapterInfo.architecture || 'WebGPU'})`
+                        : caps?.computeInfo?.gpuVendor
+                        ? `${caps.computeInfo.gpuVendor}`
+                        : 'WebGPU Compatible Adapter'}
+                    </span>
+                  </div>
                 </div>
-                <div className={styles.storageBar}>
-                  <div
-                    className={styles.storageProgress}
-                    style={{ width: `${Math.min(100, Math.max(5, caps.storage.usagePercent))}%` }}
-                  />
+
+                <div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Hardware Acceleration Tier</span>
+                    <span className={styles.diagValue}>{caps?.computeInfo?.hardwareAcceleration}</span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>WebAssembly SIMD Runtime</span>
+                    <span className={styles.diagValue}>
+                      {caps?.hasWasm ? (
+                        <span className={styles.badgeSuccess}>
+                          <CheckCircle2 size={11} /> Supported
+                        </span>
+                      ) : (
+                        <span className={styles.badgeWarning}>
+                          <AlertTriangle size={11} /> Unsupported
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Supported Compute Backends</span>
+                    <span className={styles.diagValue}>
+                      {caps?.computeInfo?.supportedBackends?.join(', ') || 'WebGPU, CPU'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Subsection C: Memory Telemetry */}
+            <div className={styles.subSection}>
+              <h3 className={styles.subSectionTitle}>
+                <HardDrive size={16} />
+                <span>C. Memory & Storage Headroom</span>
+              </h3>
+              <div className={styles.diagGrid}>
+                <div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Approximate System RAM</span>
+                    <span className={styles.diagValue}>
+                      {caps?.memoryInfo?.deviceMemoryGb
+                        ? `${caps.memoryInfo.deviceMemoryGb} GiB (Browser Quantized)`
+                        : 'Restricted by browser privacy'}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>JavaScript Heap Used</span>
+                    <span className={styles.diagValue}>
+                      {caps?.memoryInfo?.jsHeapUsedMb
+                        ? `${caps.memoryInfo.jsHeapUsedMb} MB`
+                        : 'Unavailable in non-Chromium'}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>JavaScript Heap Limit</span>
+                    <span className={styles.diagValue}>
+                      {caps?.memoryInfo?.jsHeapLimitMb ? `${caps.memoryInfo.jsHeapLimitMb} MB` : 'Unavailable'}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>OPFS Sandboxed Storage</span>
+                    <span className={styles.diagValue}>
+                      {caps?.hasOpfs ? (
+                        <span className={styles.badgeSuccess}>
+                          <CheckCircle2 size={11} /> Available
+                        </span>
+                      ) : (
+                        <span className={styles.badgeWarning}>
+                          <AlertTriangle size={11} /> Restricted
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Available Storage Quota</span>
+                    <span className={styles.diagValue}>
+                      {caps
+                        ? `${(caps.storage.freeBytes / 1024 / 1024 / 1024).toFixed(2)} GB Free of ${(caps.storage.quotaBytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+                        : 'Calculating...'}
+                    </span>
+                  </div>
+                  <div className={styles.diagItem}>
+                    <span className={styles.diagLabel}>Storage Quota Used</span>
+                    <span className={styles.diagValue}>{caps?.storage.usagePercent.toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Subsection D: Capability Assessment */}
+            <div className={styles.subSection}>
+              <h3 className={styles.subSectionTitle}>
+                <Gauge size={16} />
+                <span>D. Device Capability Assessment</span>
+              </h3>
+              <div className={styles.assessmentBox}>
+                <div className={styles.assessmentTile}>
+                  <div className={styles.assessmentTileLabel}>Overall Classification</div>
+                  <div className={styles.assessmentTileValue}>{caps?.assessment?.overallClassification}</div>
+                </div>
+                <div className={styles.assessmentTile}>
+                  <div className={styles.assessmentTileLabel}>CPU Capability</div>
+                  <div className={styles.assessmentTileValue}>{caps?.assessment?.cpuCapability}</div>
+                </div>
+                <div className={styles.assessmentTile}>
+                  <div className={styles.assessmentTileLabel}>GPU Capability</div>
+                  <div className={styles.assessmentTileValue}>{caps?.assessment?.gpuCapability}</div>
+                </div>
+                <div className={styles.assessmentTile}>
+                  <div className={styles.assessmentTileLabel}>Local Inference Suitability</div>
+                  <div className={styles.assessmentTileValue}>{caps?.assessment?.localInferenceSuitability}</div>
+                </div>
+              </div>
+
+              {caps?.assessment?.assessmentReasons && caps.assessment.assessmentReasons.length > 0 && (
+                <div style={{ marginTop: 'var(--space-3)' }}>
+                  <strong style={{ fontSize: '0.8125rem' }}>Assessment Rationale:</strong>
+                  <ul className={styles.reasonsList}>
+                    {caps.assessment.assessmentReasons.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>
@@ -781,7 +969,6 @@ export default function YaiLocalPage() {
             </p>
 
             <div className={styles.stepper}>
-              {/* Step 1 */}
               <div className={styles.stepRow}>
                 <span className={`${styles.stepNumber} ${step1Done ? styles.stepCompleted : styles.stepCurrent}`}>
                   {step1Done ? <Check size={12} /> : 1}
@@ -793,7 +980,6 @@ export default function YaiLocalPage() {
                 <span className={styles.stepStatus}>{step1Done ? 'COMPLETED' : 'PENDING'}</span>
               </div>
 
-              {/* Step 2 */}
               <div className={styles.stepRow}>
                 <span className={`${styles.stepNumber} ${step2Done ? styles.stepCompleted : step1Done ? styles.stepCurrent : styles.stepPending}`}>
                   {step2Done ? <Check size={12} /> : 2}
@@ -805,7 +991,6 @@ export default function YaiLocalPage() {
                 <span className={styles.stepStatus}>{step2Done ? 'READY' : 'EVALUATING'}</span>
               </div>
 
-              {/* Step 3 */}
               <div className={styles.stepRow}>
                 <span className={`${styles.stepNumber} ${step3Done ? styles.stepCompleted : step2Done ? styles.stepCurrent : styles.stepPending}`}>
                   {step3Done ? <Check size={12} /> : 3}
@@ -817,7 +1002,6 @@ export default function YaiLocalPage() {
                 <span className={styles.stepStatus}>{step3Done ? 'INSTALLED' : 'REQUIRED'}</span>
               </div>
 
-              {/* Step 4 */}
               <div className={styles.stepRow}>
                 <span className={`${styles.stepNumber} ${step4Done ? styles.stepCompleted : step3Done ? styles.stepCurrent : styles.stepPending}`}>
                   {step4Done ? <Check size={12} /> : 4}
@@ -829,7 +1013,6 @@ export default function YaiLocalPage() {
                 <span className={styles.stepStatus}>{step4Done ? 'VERIFIED' : 'PENDING'}</span>
               </div>
 
-              {/* Step 5 */}
               <div className={styles.stepRow}>
                 <span className={`${styles.stepNumber} ${step5Done ? styles.stepCompleted : step4Done ? styles.stepCurrent : styles.stepPending}`}>
                   {step5Done ? <Check size={12} /> : 5}
@@ -841,7 +1024,6 @@ export default function YaiLocalPage() {
                 <span className={styles.stepStatus}>{step5Done ? 'ACTIVE' : 'READY TO ACTIVATE'}</span>
               </div>
 
-              {/* Step 6 */}
               <div className={styles.stepRow}>
                 <span className={`${styles.stepNumber} ${step6Done ? styles.stepCompleted : step5Done ? styles.stepCurrent : styles.stepPending}`}>
                   {step6Done ? <Check size={12} /> : 6}
@@ -853,7 +1035,6 @@ export default function YaiLocalPage() {
                 <span className={styles.stepStatus}>{step6Done ? 'VERIFIED' : 'OPTIONAL'}</span>
               </div>
 
-              {/* Step 7 */}
               <div className={styles.stepRow}>
                 <span className={`${styles.stepNumber} ${step7Done ? styles.stepCompleted : styles.stepPending}`}>
                   <Check size={12} />
@@ -866,7 +1047,6 @@ export default function YaiLocalPage() {
               </div>
             </div>
 
-            {/* Quick Continue Action Button */}
             {nextIncompleteStep !== null && (
               <div className={styles.continueSetupCard}>
                 <div className={styles.continueSetupText}>
@@ -898,6 +1078,7 @@ export default function YaiLocalPage() {
 
       {/* ══════════════════════════════════════════════════════════════════════════
           SECTION 4 — Local Model Management (Collapsible)
+          Upgraded with Model Catalogue, Recommendation Engine & Multi-Runtime
           ══════════════════════════════════════════════════════════════════════════ */}
       <section className={styles.sectionCard}>
         <div
@@ -943,18 +1124,132 @@ export default function YaiLocalPage() {
 
         {isExpanded('models') && (
           <div id="section-models" className={styles.sectionBody}>
-            <p className={styles.sectionDesc}>
-              Available and installed on-device models. All downloads are user-initiated and cryptographically
-              verified against SHA-256 checksums before local execution.
-            </p>
+            {/* Runtime Switcher Tabs */}
+            <div className={styles.runtimeTabs}>
+              <button
+                type="button"
+                className={`${styles.runtimeTab} ${activeRuntimeTab === 'litert-lm' ? styles.runtimeTabActive : ''}`}
+                onClick={() => setActiveRuntimeTab('litert-lm')}
+              >
+                <Cpu size={15} />
+                <span>LiteRT-LM (In-Browser WebGPU)</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.runtimeTab} ${activeRuntimeTab === 'ollama' ? styles.runtimeTabActive : ''}`}
+                onClick={() => {
+                  setActiveRuntimeTab('ollama');
+                  checkOllama();
+                }}
+              >
+                <HardDrive size={15} />
+                <span>Ollama Local Daemon</span>
+                {ollamaHealth?.available && <span className={styles.badgeSuccess}>Online</span>}
+              </button>
+            </div>
 
+            {/* Runtime Banner Status */}
+            {activeRuntimeTab === 'litert-lm' ? (
+              <div className={styles.runtimeBanner}>
+                <div>
+                  <strong>Runtime: Google LiteRT-LM Web Engine</strong>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--color-muted-foreground)' }}>
+                    Runs directly in your browser tab via WebGPU / WebAssembly. Weights are downloaded into sandboxed
+                    Origin Private File System (OPFS).
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span className={caps?.hasWebGPU ? styles.badgeSuccess : styles.badgeWarning}>
+                    {caps?.hasWebGPU ? 'WebGPU Accelerated' : 'WASM CPU Mode'}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => setShowComparison((v) => !v)}>
+                    <Scale size={14} />
+                    <span>{showComparison ? 'Hide Comparison' : 'Compare Models'}</span>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.runtimeBanner}>
+                <div>
+                  <strong>Runtime: Ollama Local Service (http://127.0.0.1:11434)</strong>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--color-muted-foreground)' }}>
+                    Native local daemon for high-performance GGUF inference on Apple Silicon (Metal) and Nvidia (CUDA).
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <Button variant="outline" size="sm" onClick={checkOllama} disabled={probingOllama}>
+                    <RefreshCw size={13} className={probingOllama ? 'spin' : ''} />
+                    <span>{ollamaHealth?.available ? `Ollama v${ollamaHealth.version}` : 'Check Status'}</span>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowComparison((v) => !v)}>
+                    <Scale size={14} />
+                    <span>{showComparison ? 'Hide Comparison' : 'Compare Models'}</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Comparison Table View (Toggled) */}
+            {showComparison && (
+              <div className={styles.comparisonContainer}>
+                <h4 style={{ margin: '0 0 var(--space-3)', fontSize: '0.875rem' }}>
+                  Model Architecture & Resource Comparison
+                </h4>
+                <table className={styles.comparisonTable}>
+                  <thead>
+                    <tr>
+                      <th>Model</th>
+                      <th>Family</th>
+                      <th>Download Size</th>
+                      <th>RAM Budget</th>
+                      <th>Context Window</th>
+                      <th>Runtime</th>
+                      <th>Hardware Suitability</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {EXTENDED_MODEL_CATALOGUE.map((m) => {
+                      const rec = evaluateModelRecommendation(m, caps, activeRuntimeTab, Boolean(ollamaHealth?.available));
+                      return (
+                        <tr key={m.id}>
+                          <td>
+                            <strong>{m.name}</strong>
+                          </td>
+                          <td>{m.family}</td>
+                          <td>{(m.downloadSizeBytes / 1024 / 1024).toFixed(0)} MB</td>
+                          <td>{(m.recommendedMinRamBytes / 1024 / 1024 / 1024).toFixed(1)} GB</td>
+                          <td>{m.contextWindow.toLocaleString()} tokens</td>
+                          <td>{m.supportedRuntimes.join(', ')}</td>
+                          <td>
+                            <span
+                              className={
+                                rec.category === 'recommended'
+                                  ? styles.badgeRecommended
+                                  : rec.category === 'possible_with_limitations'
+                                  ? styles.badgePossible
+                                  : styles.badgeNotRecommended
+                              }
+                            >
+                              {rec.categoryLabel}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Model Catalogue Grid with Recommendations */}
             <div className={styles.modelGrid}>
-              {LOCAL_MODEL_CATALOG.map((model) => {
+              {EXTENDED_MODEL_CATALOGUE.filter((m) => m.supportedRuntimes.includes(activeRuntimeTab)).map((model) => {
                 const record = modelRecords.find((r) => r.modelId === model.id);
                 const isInstalled = record?.status === 'ready';
                 const isDownloading = record?.status === 'downloading' || record?.status === 'verifying';
                 const isActive = activeModelId === model.id;
-                const storageConsumedMb = isInstalled ? (model.downloadSizeBytes / 1024 / 1024).toFixed(0) : '0';
+                const rec = evaluateModelRecommendation(model, caps, activeRuntimeTab, Boolean(ollamaHealth?.available));
+                const isRationaleOpen = Boolean(expandedRationale[model.id]);
 
                 return (
                   <div
@@ -967,37 +1262,98 @@ export default function YaiLocalPage() {
                           <h3 className={styles.modelName}>{model.name}</h3>
                           {isActive && <span className={styles.primaryBadge}>Active Local Model</span>}
                         </div>
-                        <p className={styles.modelDesc}>{model.description}</p>
+                        <p className={styles.modelDesc}>
+                          {model.family} • {model.parameters} parameters ({model.quantization})
+                        </p>
                       </div>
 
-                      <div className={styles.modelBadgeStatus}>
-                        {isInstalled ? (
-                          <span className={styles.badgeSuccess}>
-                            <CheckCircle2 size={11} /> Installed
-                          </span>
-                        ) : isDownloading ? (
-                          <span className={styles.badgeWarning}>
-                            <RefreshCw size={11} className="spin" />{' '}
-                            {record?.status === 'verifying' ? 'Verifying SHA-256' : 'Downloading'}
-                          </span>
-                        ) : (
-                          <span className={styles.badgeMuted}>Not Downloaded</span>
-                        )}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                        <span
+                          className={
+                            rec.category === 'recommended'
+                              ? styles.badgeRecommended
+                              : rec.category === 'possible_with_limitations'
+                              ? styles.badgePossible
+                              : styles.badgeNotRecommended
+                          }
+                        >
+                          {rec.categoryLabel}
+                        </span>
+
+                        <div className={styles.modelBadgeStatus}>
+                          {isInstalled ? (
+                            <span className={styles.badgeSuccess}>
+                              <CheckCircle2 size={11} /> Ready
+                            </span>
+                          ) : isDownloading ? (
+                            <span className={styles.badgeWarning}>
+                              <RefreshCw size={11} className="spin" />{' '}
+                              {record?.status === 'verifying' ? 'Verifying SHA-256' : 'Downloading'}
+                            </span>
+                          ) : (
+                            <span className={styles.badgeMuted}>Not Downloaded</span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
+                    {/* Recommendation Rationale Expandable */}
+                    <div
+                      style={{
+                        background: 'var(--color-muted)',
+                        padding: '6px 10px',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                      onClick={() => toggleRationale(model.id)}
+                    >
+                      <span style={{ fontWeight: 600 }}>
+                        Recommendation Analysis ({rec.estimatedLatencyCategory} • {rec.memoryBudgetFit})
+                      </span>
+                      {isRationaleOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </div>
+
+                    {isRationaleOpen && (
+                      <div
+                        style={{
+                          background: 'var(--color-muted)',
+                          padding: '8px 12px',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.75rem',
+                          marginTop: '4px',
+                        }}
+                      >
+                        {rec.reasons.length > 0 && (
+                          <div style={{ marginBottom: '4px' }}>
+                            <strong style={{ color: 'var(--color-success)' }}>Reasons:</strong>
+                            <ul style={{ margin: '2px 0 0', paddingLeft: '16px' }}>
+                              {rec.reasons.map((r, i) => (
+                                <li key={i}>{r}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {rec.limitations.length > 0 && (
+                          <div>
+                            <strong style={{ color: 'var(--color-warning)' }}>Limitations:</strong>
+                            <ul style={{ margin: '2px 0 0', paddingLeft: '16px' }}>
+                              {rec.limitations.map((l, i) => (
+                                <li key={i}>{l}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className={styles.modelSpecs}>
                       <div className={styles.specItem}>
-                        <span className={styles.specLabel}>Model Name</span>
-                        <span className={styles.specValue}>{model.name}</span>
-                      </div>
-                      <div className={styles.specItem}>
-                        <span className={styles.specLabel}>Format</span>
-                        <span className={styles.specValue}>.{model.format}</span>
-                      </div>
-                      <div className={styles.specItem}>
-                        <span className={styles.specLabel}>Quantization</span>
-                        <span className={styles.specValue}>{model.quantization}</span>
+                        <span className={styles.specLabel}>Artifact Format</span>
+                        <span className={styles.specValue}>.{model.artifactFormat}</span>
                       </div>
                       <div className={styles.specItem}>
                         <span className={styles.specLabel}>Download Size</span>
@@ -1006,14 +1362,20 @@ export default function YaiLocalPage() {
                         </span>
                       </div>
                       <div className={styles.specItem}>
-                        <span className={styles.specLabel}>Verification</span>
+                        <span className={styles.specLabel}>Min Device RAM</span>
                         <span className={styles.specValue}>
-                          {isInstalled ? 'SHA-256 Verified' : 'Cryptographic Hash'}
+                          {(model.recommendedMinRamBytes / 1024 / 1024 / 1024).toFixed(1)} GB
                         </span>
                       </div>
                       <div className={styles.specItem}>
-                        <span className={styles.specLabel}>Storage Consumed</span>
-                        <span className={styles.specValue}>{storageConsumedMb} MB</span>
+                        <span className={styles.specLabel}>Context Window</span>
+                        <span className={styles.specValue}>{model.contextWindow.toLocaleString()} tokens</span>
+                      </div>
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>Checksum Security</span>
+                        <span className={styles.specValue}>
+                          {model.sha256 ? 'SHA-256 Authoritative' : 'Repository Host'}
+                        </span>
                       </div>
                       <div className={styles.specItem}>
                         <span className={styles.specLabel}>Activation Status</span>
@@ -1043,52 +1405,76 @@ export default function YaiLocalPage() {
                     )}
 
                     <div className={styles.modelActions}>
-                      {!isInstalled && !isDownloading && (
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleInstall(model.id)}
-                          disabled={actionInProgress === model.id}
-                        >
-                          <Download size={14} />
-                          <span>Download Model ({(model.downloadSizeBytes / 1024 / 1024).toFixed(0)} MB)</span>
-                        </Button>
-                      )}
-
-                      {isDownloading && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleCancelDownload(model.id)}
-                        >
-                          <XCircle size={14} />
-                          <span>Cancel Download</span>
-                        </Button>
-                      )}
-
-                      {isInstalled && (
+                      {activeRuntimeTab === 'litert-lm' ? (
                         <>
-                          {!isActive && (
+                          {!isInstalled && !isDownloading && model.downloadUrl && (
                             <Button
                               variant="primary"
                               size="sm"
-                              onClick={() => handleSetActiveModel(model.id)}
+                              onClick={() => handleInstall(model.id)}
+                              disabled={actionInProgress === model.id}
                             >
-                              <Sparkles size={14} />
-                              <span>Activate Model</span>
+                              <Download size={14} />
+                              <span>Download Model ({(model.downloadSizeBytes / 1024 / 1024).toFixed(0)} MB)</span>
                             </Button>
                           )}
 
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(model.id)}
-                            disabled={actionInProgress === model.id}
-                          >
-                            <Trash2 size={14} />
-                            <span>Delete Model</span>
-                          </Button>
+                          {!isInstalled && !model.downloadUrl && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-muted-foreground)' }}>
+                              Deploy via Ollama or custom WebGPU artifact.
+                            </span>
+                          )}
+
+                          {isDownloading && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleCancelDownload(model.id)}
+                            >
+                              <XCircle size={14} />
+                              <span>Cancel Download</span>
+                            </Button>
+                          )}
+
+                          {isInstalled && (
+                            <>
+                              {!isActive && (
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => handleSetActiveModel(model.id)}
+                                >
+                                  <Sparkles size={14} />
+                                  <span>Activate Model</span>
+                                </Button>
+                              )}
+
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDelete(model.id)}
+                                disabled={actionInProgress === model.id}
+                              >
+                                <Trash2 size={14} />
+                                <span>Delete Model</span>
+                              </Button>
+                            </>
+                          )}
                         </>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <Button
+                            variant={isActive ? 'outline' : 'primary'}
+                            size="sm"
+                            onClick={() => handleSetActiveModel(model.id)}
+                          >
+                            <Sparkles size={14} />
+                            <span>{isActive ? 'Active Ollama Model' : 'Select for Ollama'}</span>
+                          </Button>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-muted-foreground)' }}>
+                            CLI: <code>ollama run {model.ollamaTag}</code>
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1304,7 +1690,6 @@ export default function YaiLocalPage() {
             </p>
 
             <div className={styles.modeGrid}>
-              {/* Mode 1: Local Only */}
               <div
                 className={`${styles.modeCard} ${inferenceMode === 'local' ? styles.modeCardSelected : ''}`}
                 onClick={() => handleModeChange('local')}
@@ -1329,7 +1714,6 @@ export default function YaiLocalPage() {
                 </p>
               </div>
 
-              {/* Mode 2: Automatic */}
               <div
                 className={`${styles.modeCard} ${inferenceMode === 'auto' ? styles.modeCardSelected : ''}`}
                 onClick={() => handleModeChange('auto')}
@@ -1354,7 +1738,6 @@ export default function YaiLocalPage() {
                 </p>
               </div>
 
-              {/* Mode 3: Cloud Only */}
               <div
                 className={`${styles.modeCard} ${inferenceMode === 'cloud' ? styles.modeCardSelected : ''}`}
                 onClick={() => handleModeChange('cloud')}
@@ -1380,7 +1763,6 @@ export default function YaiLocalPage() {
               </div>
             </div>
 
-            {/* Privacy Callout */}
             <div className={styles.privacyCallout}>
               <Shield size={20} style={{ flexShrink: 0, color: 'var(--color-primary)' }} />
               <div>

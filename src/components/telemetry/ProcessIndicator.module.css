@@ -1,0 +1,78 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.iconNeutral {
+  color: var(--color-muted-foreground);
+  opacity: 0.8;
+}
+
+.iconActive {
+  color: var(--color-primary);
+  animation: pulseIndicator 1.8s infinite ease-in-out;
+}
+
+.iconWarning {
+  color: var(--color-warning);
+}
+
+@keyframes pulseIndicator {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+.badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 1.5px var(--color-background);
+}
+
+.badgeWarning {
+  background: var(--color-warning);
+  color: var(--color-warning-foreground);
+}

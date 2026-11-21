@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Moon, Sun, Menu } from 'lucide-react';
 import { ThemeProvider, useTheme } from '@/components/providers/ThemeProvider';
+import { TelemetryProvider } from '@/lib/telemetry/telemetry-context';
+import ProcessIndicator from '@/components/telemetry/ProcessIndicator';
 import AppNav from '@/components/navigation/AppNav';
 import styles from './AppShell.module.css';
 
@@ -57,6 +59,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
         <div className={styles.headerRight}>
+          <ProcessIndicator />
           <button
             className={styles.iconButton}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
@@ -102,7 +105,9 @@ function ShellInner({ children }: { children: React.ReactNode }) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <ShellInner>{children}</ShellInner>
+      <TelemetryProvider>
+        <ShellInner>{children}</ShellInner>
+      </TelemetryProvider>
     </ThemeProvider>
   );
 }

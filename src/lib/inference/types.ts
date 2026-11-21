@@ -88,6 +88,64 @@ export interface DeviceCapabilityReport {
   };
   isSupported: boolean;
   unsupportedReasons: string[];
+
+  // Comprehensive Device Intelligence Additions
+  deviceInfo?: {
+    platform: string;
+    platformVersion?: string;
+    browserName: string;
+    browserVersion: string;
+    browserEngine: string;
+    deviceType: 'Desktop' | 'Laptop' | 'Tablet' | 'Mobile' | 'Unknown';
+    screenResolution: string;
+    availableScreen: string;
+    devicePixelRatio: number;
+    language: string;
+    timeZone: string;
+    networkStatus: {
+      isOnline: boolean;
+      connectionType?: string;
+      effectiveType?: string;
+      downlinkMb?: number;
+      rttMs?: number;
+    };
+    privacyNotes: string[];
+  };
+
+  computeInfo?: {
+    logicalCores?: number;
+    cpuArchitecture?: string;
+    gpuVendor?: string;
+    gpuRenderer?: string;
+    supportedBackends: Array<'WebGPU' | 'WebAssembly SIMD' | 'WebGL' | 'CPU'>;
+    hardwareAcceleration: string;
+    computeNotes: string[];
+  };
+
+  memoryInfo?: {
+    deviceMemoryGb?: number;
+    deviceMemoryQuantized: boolean;
+    jsHeapUsedMb?: number;
+    jsHeapLimitMb?: number;
+    modelMemoryAllocatedMb?: number;
+    runtimeMemoryMb?: number;
+    memoryNotes: string[];
+  };
+
+  assessment?: {
+    overallClassification: 'High capability' | 'Moderate capability' | 'Limited capability' | 'Insufficient information';
+    cpuCapability: string;
+    gpuCapability: string;
+    memorySuitability: string;
+    localInferenceSuitability: 'Highly Suitable' | 'Suitable with Limitations' | 'Constrained' | 'Not Recommended';
+    runtimeCompatibility: {
+      litertWebGpu: boolean;
+      litertWasm: boolean;
+      ollamaNative: boolean;
+    };
+    assessmentReasons: string[];
+    assessmentLimitations: string[];
+  };
 }
 
 export type RuntimeState =

@@ -28,6 +28,7 @@ const PRIMARY_NAV = [
 const SYSTEM_NAV = [
   { href: '/apps',           label: 'Connected Apps',      icon: Plug },
   { href: '/providers',      label: 'AI Providers',        icon: Cpu },
+  { href: '/monitor',        label: 'Runtime Monitor',     icon: Activity },
   { href: '/settings',       label: 'Settings',            icon: Settings },
   { href: '/versions',       label: 'Version History',     icon: History },
 ];

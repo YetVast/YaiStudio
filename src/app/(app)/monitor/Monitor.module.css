@@ -1,0 +1,417 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-12);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ─── Metric Tiles ────────────────────────────────────────── */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.metricCard {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.metricHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.metricLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+}
+
+.metricValue {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.metricSubtext {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  margin-top: var(--space-1);
+}
+
+/* ─── Sections ────────────────────────────────────────────── */
+.section {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sectionTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+/* ─── Memory Breakdown Grid ───────────────────────────────── */
+.memoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.memoryBox {
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.memoryBoxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.memoryBoxTitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.dataPill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+}
+
+.dataPillMeasured {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.dataPillEstimated {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.memoryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  margin-bottom: var(--space-1);
+}
+
+.memoryRowLabel {
+  color: var(--color-muted-foreground);
+}
+
+.memoryRowValue {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.privacyCallout {
+  display: flex;
+  gap: var(--space-3);
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  margin-top: var(--space-4);
+  line-height: 1.5;
+}
+
+/* ─── Operations List ─────────────────────────────────────── */
+.opsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.opCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.opCardRunning {
+  border-color: var(--color-primary);
+}
+
+.opCardFailed {
+  border-color: var(--color-destructive);
+}
+
+.opHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  background: var(--color-card);
+  user-select: none;
+}
+
+.opHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.opStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: var(--font-mono);
+}
+
+.statusRunning {
+  background: rgba(75, 0, 132, 0.12);
+  color: var(--color-primary);
+}
+
+.statusCompleted {
+  background: rgba(22, 128, 60, 0.12);
+  color: var(--color-success);
+}
+
+.statusFailed {
+  background: rgba(198, 40, 40, 0.12);
+  color: var(--color-destructive);
+}
+
+.statusCancelled {
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+}
+
+.opName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.opMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.opHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.progressContainer {
+  padding: 0 var(--space-4) var(--space-3);
+  background: var(--color-card);
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-1);
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-muted);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+/* ─── Expandable Details & Logs ──────────────────────────── */
+.opDetails {
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-4);
+  background: var(--color-muted);
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.detailTile {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.detailLabel {
+  font-size: 0.6875rem;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.detailValue {
+  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin-top: 2px;
+}
+
+.logBox {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  max-height: 220px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.logEntry {
+  display: flex;
+  gap: var(--space-3);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logEntry:last-child {
+  border-bottom: none;
+}
+
+.logTime {
+  color: var(--color-muted-foreground);
+  flex-shrink: 0;
+}
+
+.logStage {
+  color: var(--color-primary);
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 110px;
+}
+
+.logMsg {
+  color: var(--color-foreground);
+  word-break: break-word;
+}
+
+.opControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-10) var(--space-4);
+  color: var(--color-muted-foreground);
+}
+
+.emptyStateIcon {
+  margin: 0 auto var(--space-2);
+  color: var(--color-muted-foreground);
+  opacity: 0.5;
+}

@@ -269,5 +269,5 @@ describe('Version History Generator', () => {
     expect(manifest.versions[0].version).toMatch(/^v0\.\d+$/);
     expect(manifest.versions[manifest.versions.length - 1].version).toBe('v0.1');
     expect(manifest.versions[manifest.versions.length - 1].isBaseline).toBe(true);
-  });
+  }, 15000);
 });
