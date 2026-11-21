@@ -433,9 +433,51 @@ export default function RuntimeMonitorPage() {
                         </div>
                         {proc.resourceMetrics?.tokensPerSec !== undefined && (
                           <div className={styles.detailTile}>
-                            <div className={styles.detailLabel}>Generation Throughput</div>
+                            <div className={styles.detailLabel}>Generation Speed</div>
                             <div className={styles.detailValue}>
                               {proc.resourceMetrics.tokensPerSec} tok/s
+                            </div>
+                          </div>
+                        )}
+                        {proc.resourceMetrics?.loadDurationMs !== undefined && proc.resourceMetrics.loadDurationMs > 0 && (
+                          <div className={styles.detailTile}>
+                            <div className={styles.detailLabel}>Model Load Time</div>
+                            <div className={styles.detailValue}>
+                              {proc.resourceMetrics.loadDurationMs} ms
+                            </div>
+                          </div>
+                        )}
+                        {proc.resourceMetrics?.promptEvalDurationMs !== undefined && proc.resourceMetrics.promptEvalDurationMs > 0 && (
+                          <div className={styles.detailTile}>
+                            <div className={styles.detailLabel}>Prompt Evaluation</div>
+                            <div className={styles.detailValue}>
+                              {proc.resourceMetrics.promptEvalDurationMs} ms
+                            </div>
+                          </div>
+                        )}
+                        {proc.resourceMetrics?.evalDurationMs !== undefined && proc.resourceMetrics.evalDurationMs > 0 && (
+                          <div className={styles.detailTile}>
+                            <div className={styles.detailLabel}>Token Evaluation</div>
+                            <div className={styles.detailValue}>
+                              {proc.resourceMetrics.evalDurationMs} ms
+                            </div>
+                          </div>
+                        )}
+                        {proc.resourceMetrics?.tokensGenerated !== undefined && (
+                          <div className={styles.detailTile}>
+                            <div className={styles.detailLabel}>Tokens (Prompt / Eval)</div>
+                            <div className={styles.detailValue}>
+                              {proc.resourceMetrics.promptTokens ?? 0} in / {proc.resourceMetrics.tokensGenerated} out
+                            </div>
+                          </div>
+                        )}
+                        {proc.resourceMetrics?.telemetryReliability && (
+                          <div className={styles.detailTile}>
+                            <div className={styles.detailLabel}>Telemetry Quality</div>
+                            <div className={styles.detailValue}>
+                              <span className={`${styles.dataPill} ${proc.resourceMetrics.telemetryReliability === 'MEASURED' ? styles.dataPillMeasured : styles.dataPillEstimated}`}>
+                                {proc.resourceMetrics.telemetryReliability}
+                              </span>
                             </div>
                           </div>
                         )}

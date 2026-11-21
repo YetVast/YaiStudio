@@ -46,7 +46,12 @@ import { LocalModelManager } from '@/lib/inference/model-manager';
 import { detectDeviceCapabilities } from '@/lib/inference/device-capabilities';
 import { runLiteRTPoc, type PocExecutionReport } from '@/lib/inference/litert-poc';
 import { LocalAIConfig } from '@/lib/inference/local-ai-config';
-import { OllamaClient, type OllamaHealthReport, type OllamaRunningModel } from '@/lib/inference/runtimes/ollama-client';
+import {
+  OllamaClient,
+  type OllamaHealthReport,
+  type OllamaRunningModel,
+  type OllamaModelItem,
+} from '@/lib/inference/runtimes/ollama-client';
 import { usePWA } from '@/lib/pwa/pwa-context';
 import type {
   DeviceCapabilityReport,
@@ -56,6 +61,7 @@ import type {
 import styles from './YaiLocal.module.css';
 
 const QUICK_PROMPTS = [
+  'What is the capital of India? Answer in one sentence.',
   'What is YAI Studio and how do you protect privacy?',
   'Explain the benefits of running AI models directly on-device.',
   'What is the difference between local inference and cloud inference?',
@@ -71,8 +77,11 @@ export default function YaiLocalPage() {
 
   // Runtime Selection & Health
   const [activeRuntimeTab, setActiveRuntimeTab] = useState<'litert-lm' | 'ollama'>('litert-lm');
+  const [ollamaEndpoint, setOllamaEndpoint] = useState<string>(OllamaClient.getEndpoint());
   const [ollamaHealth, setOllamaHealth] = useState<OllamaHealthReport | null>(null);
+  const [installedOllamaModels, setInstalledOllamaModels] = useState<OllamaModelItem[]>([]);
   const [runningOllamaModels, setRunningOllamaModels] = useState<OllamaRunningModel[]>([]);
+  const [activeOllamaModel, setActiveOllamaModel] = useState<string>('llama3.2:latest');
   const [probingOllama, setProbingOllama] = useState(false);
 
   // Preference state synced with LocalAIConfig
@@ -146,20 +155,36 @@ export default function YaiLocalPage() {
     return () => media.removeEventListener('change', checkMode);
   }, []);
 
-  // Check Ollama health
-  const checkOllama = useCallback(async () => {
+  // Check Ollama health & model enumeration
+  const checkOllama = useCallback(async (customEndpoint?: string) => {
     setProbingOllama(true);
     try {
-      const health = await OllamaClient.checkHealth();
+      const targetEndpoint = customEndpoint || ollamaEndpoint;
+      if (customEndpoint) {
+        OllamaClient.setEndpoint(customEndpoint);
+        setOllamaEndpoint(customEndpoint);
+      }
+      const health = await OllamaClient.checkHealth(targetEndpoint);
       setOllamaHealth(health);
       if (health.available) {
-        const running = await OllamaClient.listRunningModels();
+        const [models, running] = await Promise.all([
+          OllamaClient.listModels().catch(() => []),
+          OllamaClient.listRunningModels().catch(() => []),
+        ]);
+        setInstalledOllamaModels(models);
         setRunningOllamaModels(running);
+        if (models.length > 0) {
+          const saved = LocalAIConfig.getActiveModelId('ollama');
+          const isSavedAvailable = saved && models.some((m) => m.name === saved);
+          const chosenModel = isSavedAvailable ? saved : models[0].name;
+          setActiveOllamaModel(chosenModel);
+          LocalAIConfig.setActiveModelId(chosenModel, 'ollama');
+        }
       }
     } finally {
       setProbingOllama(false);
     }
-  }, []);
+  }, [ollamaEndpoint]);
 
   // Refresh device capabilities and model state
   const refreshData = useCallback(async () => {
@@ -262,29 +287,30 @@ export default function YaiLocalPage() {
 
     // If using Ollama runtime
     if (activeRuntimeTab === 'ollama') {
+      const targetOllamaModel = activeOllamaModel || LocalAIConfig.getActiveModelId('ollama') || 'llama3.2:latest';
       if (!ollamaHealth?.available) {
-        setTestError('Ollama local daemon is not running. Please start Ollama at 127.0.0.1:11434 first.');
+        setTestError(`Ollama local daemon is not running or unreachable at ${ollamaEndpoint}. Verify Ollama is started (ollama serve) with OLLAMA_ORIGINS="*" configured.`);
         return;
       }
       setTestRunning(true);
       setTestReport(null);
       try {
         const result = await OllamaClient.generate({
-          model: targetModel.startsWith('ollama-') ? targetModel.replace('ollama-', '') : 'gemma4:2b',
+          model: targetOllamaModel,
           prompt: testPrompt,
-          system: 'You are YAI Studio Local Intelligence running via Ollama.',
+          system: 'You are YAI Studio Local Intelligence running directly on-device.',
         });
         setTestReport({
           success: true,
-          modelId: targetModel,
-          response: result.content,
+          modelId: result.model,
+          response: result.response,
           outboundRequestsCount: 0,
           privacyVerified: true,
           measurements: {
-            initDurationMs: 10,
-            modelLoadDurationMs: 0,
-            timeToFirstTokenMs: 50,
-            totalDurationMs: result.durationMs,
+            initDurationMs: result.loadDurationMs,
+            modelLoadDurationMs: result.loadDurationMs,
+            timeToFirstTokenMs: result.promptEvalDurationMs || 50,
+            totalDurationMs: result.totalDurationMs,
             tokensGenerated: result.evalCount || 0,
             tokensPerSecond: result.tokensPerSecond || 0,
           },
@@ -292,6 +318,9 @@ export default function YaiLocalPage() {
           unsupportedReasons: [],
         });
         setHasRunTest(true);
+        // Refresh running models after test to show in-VRAM status
+        const running = await OllamaClient.listRunningModels().catch(() => []);
+        setRunningOllamaModels(running);
       } catch (err) {
         setTestError(`Ollama execution failed: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
@@ -1171,13 +1200,13 @@ export default function YaiLocalPage() {
             ) : (
               <div className={styles.runtimeBanner}>
                 <div>
-                  <strong>Runtime: Ollama Local Service (http://127.0.0.1:11434)</strong>
+                  <strong>Runtime: Ollama Local Service ({ollamaEndpoint})</strong>
                   <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--color-muted-foreground)' }}>
                     Native local daemon for high-performance GGUF inference on Apple Silicon (Metal) and Nvidia (CUDA).
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <Button variant="outline" size="sm" onClick={checkOllama} disabled={probingOllama}>
+                  <Button variant="outline" size="sm" onClick={() => checkOllama()} disabled={probingOllama}>
                     <RefreshCw size={13} className={probingOllama ? 'spin' : ''} />
                     <span>{ollamaHealth?.available ? `Ollama v${ollamaHealth.version}` : 'Check Status'}</span>
                   </Button>
@@ -1186,6 +1215,167 @@ export default function YaiLocalPage() {
                     <span>{showComparison ? 'Hide Comparison' : 'Compare Models'}</span>
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {/* Direct Localhost Connectivity & Ollama Configuration */}
+            {activeRuntimeTab === 'ollama' && (
+              <div className={styles.endpointBox}>
+                <div className={styles.endpointHeader}>
+                  <div>
+                    <strong>Direct Localhost Ollama Endpoint</strong>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--color-muted-foreground)' }}>
+                      In production (https://yaistudio.yetvast.com), your browser communicates directly with your device&apos;s port 11434 with zero server hops.
+                    </p>
+                  </div>
+                  <span
+                    className={
+                      ollamaHealth?.available
+                        ? styles.badgeSuccess
+                        : ollamaHealth?.state === 'ERROR'
+                        ? styles.badgeWarning
+                        : styles.badgeNotRecommended
+                    }
+                  >
+                    {ollamaHealth?.available
+                      ? `Connected (v${ollamaHealth.version})`
+                      : ollamaHealth?.state === 'ERROR'
+                      ? 'CORS Policy Block'
+                      : 'Offline / Unreachable'}
+                  </span>
+                </div>
+
+                <div className={styles.endpointInputRow}>
+                  <input
+                    type="text"
+                    value={ollamaEndpoint}
+                    onChange={(e) => setOllamaEndpoint(e.target.value)}
+                    placeholder="http://127.0.0.1:11434"
+                    className={styles.endpointInput}
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => checkOllama(ollamaEndpoint)}
+                    disabled={probingOllama}
+                  >
+                    <RefreshCw size={13} className={probingOllama ? 'spin' : ''} />
+                    <span>{probingOllama ? 'Connecting...' : 'Save & Test Connection'}</span>
+                  </Button>
+                </div>
+
+                {(!ollamaHealth?.available || ollamaHealth?.state === 'ERROR') && (
+                  <div className={styles.troubleshootingBox}>
+                    <strong>Troubleshooting Direct Browser Connection:</strong>
+                    {ollamaHealth?.state === 'ERROR' ? (
+                      <div>
+                        <p style={{ margin: '4px 0' }}>
+                          Ollama is running at <code>{ollamaEndpoint}</code>, but browser cross-origin requests from{' '}
+                          <code>{typeof window !== 'undefined' ? window.location.origin : 'this origin'}</code> are blocked by Ollama&apos;s default origin policy.
+                        </p>
+                        <pre>
+                          {`# Windows (PowerShell):\n$env:OLLAMA_ORIGINS="*"; ollama serve\n\n# macOS:\nlaunchctl setenv OLLAMA_ORIGINS "*"\n\n# Linux (systemd service):\nEnvironment="OLLAMA_ORIGINS=*"`}
+                        </pre>
+                        <p style={{ margin: '4px 0 0' }}>
+                          Or launch the zero-dependency local companion: <code>node scripts/yai-local-agent.mjs</code>
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ margin: '4px 0' }}>
+                          Ollama daemon is not responding on <code>{ollamaEndpoint}</code>. Start it in terminal:
+                        </p>
+                        <pre>{`$env:OLLAMA_ORIGINS="*"; ollama serve`}</pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Installed Models list if available */}
+                {installedOllamaModels.length > 0 && (
+                  <div style={{ marginTop: 'var(--space-3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                      <strong style={{ fontSize: '0.875rem' }}>
+                        Installed Models on Device ({installedOllamaModels.length})
+                      </strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-muted-foreground)' }}>
+                        Retrieved directly via <code>GET /api/tags</code>
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {installedOllamaModels.map((m) => {
+                        const isModelActive = activeOllamaModel === m.name;
+                        const isLoadedInVram = runningOllamaModels.some(
+                          (r) => r.name === m.name || r.model === m.name
+                        );
+
+                        return (
+                          <div
+                            key={m.name}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: 'var(--space-3)',
+                              background: isModelActive ? 'rgba(75, 0, 132, 0.08)' : 'var(--color-muted)',
+                              border: `1px solid ${isModelActive ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                              borderRadius: 'var(--radius-sm)',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                            }}
+                          >
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <strong style={{ fontFamily: 'var(--font-mono)' }}>{m.name}</strong>
+                                {isModelActive && <span className={styles.badgePrimary}>Active Selection</span>}
+                                {isLoadedInVram && (
+                                  <span className={styles.badgeSuccess}>
+                                    <Zap size={10} /> Loaded in VRAM
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-muted-foreground)', marginTop: '2px' }}>
+                                Family: {m.details?.family || 'GGUF'} • Parameters: {m.details?.parameter_size || 'Standard'} • Size: {(m.size / (1024 * 1024 * 1024)).toFixed(2)} GB
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              {!isModelActive ? (
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => {
+                                    setActiveOllamaModel(m.name);
+                                    LocalAIConfig.setActiveModelId(m.name, 'ollama');
+                                  }}
+                                >
+                                  <Sparkles size={12} />
+                                  <span>Select for Inference</span>
+                                </Button>
+                              ) : (
+                                <span className={styles.badgeSuccess}>Selected</span>
+                              )}
+                              {isLoadedInVram && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={async () => {
+                                    await OllamaClient.unloadModel(m.name);
+                                    const running = await OllamaClient.listRunningModels().catch(() => []);
+                                    setRunningOllamaModels(running);
+                                  }}
+                                >
+                                  <span>Unload from VRAM</span>
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

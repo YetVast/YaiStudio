@@ -43,6 +43,12 @@ export interface RuntimeProcessResourceMetrics {
   tokensPerSec?: number;
   tokensGenerated?: number;
   durationMs?: number;
+  loadDurationMs?: number;
+  promptEvalDurationMs?: number;
+  evalDurationMs?: number;
+  promptTokens?: number;
+  completionTokens?: number;
+  telemetryReliability?: 'MEASURED' | 'ESTIMATED' | 'UNAVAILABLE';
 }
 
 export interface RuntimeProcess {

@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-21T12:27:04.089Z",
-  "currentVersion": "v0.16",
+  "generatedAt": "2026-11-21T13:15:59.779Z",
+  "currentVersion": "v0.18",
   "currentMajor": 0,
-  "totalVersions": 16,
+  "totalVersions": 18,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -23,6 +23,268 @@
     }
   ],
   "versions": [
+    {
+      "version": "v0.18",
+      "major": 0,
+      "sequence": 18,
+      "commitHash": "6f42269428c239011c000bd48bebf354297fe246",
+      "shortCommitHash": "6f42269",
+      "subject": "feat(inference): browser-to-ollama direct connectivity, real telemetry, and first local inference",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-21T18:45:50+05:30",
+      "committedAt": "2026-11-21T18:45:50+05:30",
+      "changeType": [
+        "feature",
+        "ui"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-21-local-inference-connectivity-and-first-inference.md",
+        "scripts/yai-local-agent.mjs",
+        "src/app/(app)/monitor/page.tsx",
+        "src/app/(app)/providers/page.tsx",
+        "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+        "src/app/(app)/settings/yai-local/page.tsx",
+        "src/generated/version-history.json",
+        "src/lib/inference/local-ai-config.ts",
+        "src/lib/inference/runtimes/ollama-client.ts",
+        "src/lib/telemetry/types.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-21-local-inference-connectivity-and-first-inference.md",
+          "insertions": 496,
+          "deletions": 0
+        },
+        {
+          "path": "scripts/yai-local-agent.mjs",
+          "insertions": 140,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/monitor/page.tsx",
+          "insertions": 43,
+          "deletions": 1
+        },
+        {
+          "path": "src/app/(app)/providers/page.tsx",
+          "insertions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+          "insertions": 75,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/page.tsx",
+          "insertions": 207,
+          "deletions": 17
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 179,
+          "deletions": 3
+        },
+        {
+          "path": "src/lib/inference/local-ai-config.ts",
+          "insertions": 40,
+          "deletions": 6
+        },
+        {
+          "path": "src/lib/inference/runtimes/ollama-client.ts",
+          "insertions": 278,
+          "deletions": 55
+        },
+        {
+          "path": "src/lib/telemetry/types.ts",
+          "insertions": 6,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 10,
+      "insertions": 1466,
+      "deletions": 84,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.17",
+      "major": 0,
+      "sequence": 17,
+      "commitHash": "dbad4cc88d986cc96de919a7ffe3faf5f8bd82a2",
+      "shortCommitHash": "dbad4cc",
+      "subject": "Device Intelligence, Model Recommendations & Local AI Runtime Monitor",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-21T18:00:07+05:30",
+      "committedAt": "2026-11-21T18:00:07+05:30",
+      "changeType": [
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-20-litert-lm-opfs-storage-download-pipeline.md",
+        "docs/implementation/2026-11-21-device-intelligence-model-recommendations-runtime-monitor.md",
+        "src/app/(app)/monitor/Monitor.module.css",
+        "src/app/(app)/monitor/page.tsx",
+        "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+        "src/app/(app)/settings/yai-local/page.tsx",
+        "src/app/api/local-runtime/ollama/[action]/route.ts",
+        "src/components/layout/AppShell.tsx",
+        "src/components/navigation/AppNav.tsx",
+        "src/components/telemetry/ProcessIndicator.module.css",
+        "src/components/telemetry/ProcessIndicator.tsx",
+        "src/generated/version-history.json",
+        "src/lib/inference/device-capabilities.ts",
+        "src/lib/inference/litert-engine.ts",
+        "src/lib/inference/model-catalogue.ts",
+        "src/lib/inference/model-downloader.ts",
+        "src/lib/inference/runtimes/ollama-client.ts",
+        "src/lib/inference/types.ts",
+        "src/lib/telemetry/process-telemetry.ts",
+        "src/lib/telemetry/telemetry-context.tsx",
+        "src/lib/telemetry/types.ts",
+        "tests/inference/model-recommendations.test.ts",
+        "tests/inference/ollama-client.test.ts",
+        "tests/telemetry/process-telemetry.test.ts",
+        "tests/versions/version-generator.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-20-litert-lm-opfs-storage-download-pipeline.md",
+          "insertions": 220,
+          "deletions": 0
+        },
+        {
+          "path": "docs/implementation/2026-11-21-device-intelligence-model-recommendations-runtime-monitor.md",
+          "insertions": 740,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/monitor/Monitor.module.css",
+          "insertions": 417,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/monitor/page.tsx",
+          "insertions": 489,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/YaiLocal.module.css",
+          "insertions": 183,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/settings/yai-local/page.tsx",
+          "insertions": 591,
+          "deletions": 209
+        },
+        {
+          "path": "src/app/api/local-runtime/ollama/[action]/route.ts",
+          "insertions": 177,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "insertions": 6,
+          "deletions": 1
+        },
+        {
+          "path": "src/components/navigation/AppNav.tsx",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/telemetry/ProcessIndicator.module.css",
+          "insertions": 78,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/telemetry/ProcessIndicator.tsx",
+          "insertions": 51,
+          "deletions": 0
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 244,
+          "deletions": 3
+        },
+        {
+          "path": "src/lib/inference/device-capabilities.ts",
+          "insertions": 377,
+          "deletions": 28
+        },
+        {
+          "path": "src/lib/inference/litert-engine.ts",
+          "insertions": 60,
+          "deletions": 7
+        },
+        {
+          "path": "src/lib/inference/model-catalogue.ts",
+          "insertions": 398,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/model-downloader.ts",
+          "insertions": 31,
+          "deletions": 1
+        },
+        {
+          "path": "src/lib/inference/runtimes/ollama-client.ts",
+          "insertions": 181,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/inference/types.ts",
+          "insertions": 58,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/process-telemetry.ts",
+          "insertions": 399,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/telemetry-context.tsx",
+          "insertions": 95,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/types.ts",
+          "insertions": 77,
+          "deletions": 0
+        },
+        {
+          "path": "tests/inference/model-recommendations.test.ts",
+          "insertions": 155,
+          "deletions": 0
+        },
+        {
+          "path": "tests/inference/ollama-client.test.ts",
+          "insertions": 92,
+          "deletions": 0
+        },
+        {
+          "path": "tests/telemetry/process-telemetry.test.ts",
+          "insertions": 147,
+          "deletions": 0
+        },
+        {
+          "path": "tests/versions/version-generator.test.ts",
+          "insertions": 1,
+          "deletions": 1
+        }
+      ],
+      "filesChanged": 25,
+      "insertions": 5268,
+      "deletions": 250,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
     {
       "version": "v0.16",
       "major": 0,

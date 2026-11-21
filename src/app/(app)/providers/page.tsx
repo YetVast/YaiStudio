@@ -36,7 +36,7 @@ export default function ProvidersPage() {
   // Local LiteRT Provider State
   const [localCaps, setLocalCaps] = useState<DeviceCapabilityReport | null>(null);
   const [localRecords, setLocalRecords] = useState<InstalledModelRecord[]>([]);
-  const [activeLocalModelId, setActiveLocalModelId] = useState<string>('gemma-2-2b-it-int4');
+  const [activeLocalModelId, setActiveLocalModelId] = useState<string>('gemma-4-e2b-it-web');
 
   // Key entry state
   const [activeProvider, setActiveProvider] = useState<'openrouter' | 'google-ai' | null>(null);
@@ -237,7 +237,7 @@ export default function ProvidersPage() {
                 <div>
                   <span className={styles.keyLabel}>Active Model:</span>
                   <span className={styles.localInfoValue}>
-                    {activeModelDescriptor ? activeModelDescriptor.name : 'Gemma 2 2B Instruct (INT4)'}
+                    {activeModelDescriptor ? activeModelDescriptor.name : (activeLocalModelId || 'Gemma 4 E2B Instruct (WebGPU)')}
                   </span>
                 </div>
                 <div>

@@ -14,21 +14,43 @@ import { LOCAL_MODEL_CATALOG } from './local-model-registry';
 
 const MODE_KEY = 'yai_inference_mode_v1';
 const ACTIVE_MODEL_KEY = 'yai_active_local_model_v1';
+const ACTIVE_OLLAMA_MODEL_KEY = 'yai_active_ollama_model_v1';
+const ACTIVE_RUNTIME_KEY = 'yai_active_local_runtime_v1';
 const PREFERRED_CLOUD_KEY = 'yai_preferred_cloud_provider_v1';
+
+export type LocalRuntimeSelection = 'litert-lm' | 'ollama';
 
 export interface LocalAIPreferences {
   inferenceMode: InferenceMode;
+  activeRuntime: LocalRuntimeSelection;
   activeModelId: string | null;
   preferredCloudProvider: 'openrouter' | 'google-ai';
 }
 
 export class LocalAIConfig {
   static getPreferences(): LocalAIPreferences {
+    const activeRuntime = this.getRuntime();
     return {
       inferenceMode: this.getInferenceMode(),
-      activeModelId: this.getActiveModelId(),
+      activeRuntime,
+      activeModelId: this.getActiveModelId(activeRuntime),
       preferredCloudProvider: this.getPreferredCloudProvider(),
     };
+  }
+
+  static getRuntime(): LocalRuntimeSelection {
+    if (typeof localStorage === 'undefined') return 'litert-lm';
+    const val = localStorage.getItem(ACTIVE_RUNTIME_KEY);
+    if (val === 'ollama' || val === 'litert-lm') {
+      return val;
+    }
+    return 'litert-lm';
+  }
+
+  static setRuntime(runtime: LocalRuntimeSelection): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(ACTIVE_RUNTIME_KEY, runtime);
+    this.dispatchChangeEvent();
   }
 
   static getInferenceMode(): InferenceMode {
@@ -46,8 +68,17 @@ export class LocalAIConfig {
     this.dispatchChangeEvent();
   }
 
-  static getActiveModelId(): string {
-    if (typeof localStorage === 'undefined') return LOCAL_MODEL_CATALOG[0]?.id || 'gemma-4-e2b-it-web';
+  static getActiveModelId(runtime?: LocalRuntimeSelection): string {
+    const currentRuntime = runtime || this.getRuntime();
+    if (typeof localStorage === 'undefined') {
+      return currentRuntime === 'ollama' ? 'llama3.2:latest' : (LOCAL_MODEL_CATALOG[0]?.id || 'gemma-4-e2b-it-web');
+    }
+
+    if (currentRuntime === 'ollama') {
+      const val = localStorage.getItem(ACTIVE_OLLAMA_MODEL_KEY);
+      return val || 'llama3.2:latest';
+    }
+
     const val = localStorage.getItem(ACTIVE_MODEL_KEY);
     if (val && LOCAL_MODEL_CATALOG.some((m) => m.id === val)) {
       return val;
@@ -55,12 +86,15 @@ export class LocalAIConfig {
     return LOCAL_MODEL_CATALOG[0]?.id || 'gemma-4-e2b-it-web';
   }
 
-  static setActiveModelId(modelId: string | null): void {
+  static setActiveModelId(modelId: string | null, runtime?: LocalRuntimeSelection): void {
     if (typeof localStorage === 'undefined') return;
+    const currentRuntime = runtime || this.getRuntime();
+    const storageKey = currentRuntime === 'ollama' ? ACTIVE_OLLAMA_MODEL_KEY : ACTIVE_MODEL_KEY;
+
     if (modelId === null) {
-      localStorage.removeItem(ACTIVE_MODEL_KEY);
+      localStorage.removeItem(storageKey);
     } else {
-      localStorage.setItem(ACTIVE_MODEL_KEY, modelId);
+      localStorage.setItem(storageKey, modelId);
     }
     this.dispatchChangeEvent();
   }
