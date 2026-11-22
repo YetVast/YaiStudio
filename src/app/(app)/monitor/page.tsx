@@ -21,12 +21,24 @@ import {
   ArrowLeft,
   Square,
   Sparkles,
+  FileText,
+  Copy,
+  Check,
+  Code,
+  X,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useTelemetry } from '@/lib/telemetry/telemetry-context';
 import { detectDeviceCapabilities } from '@/lib/inference/device-capabilities';
 import { OllamaClient } from '@/lib/inference/runtimes/ollama-client';
 import { LocalAIConfig } from '@/lib/inference/local-ai-config';
+import {
+  TestOnceRunner,
+  DEFAULT_TEST_QUERY,
+  TestHistoryStorage,
+  type TestOnceResult,
+  type ModelInfoTelemetry,
+} from '@/lib/telemetry/test-runner';
 import type { DeviceCapabilityReport } from '@/lib/inference/types';
 import type { RuntimeProcess } from '@/lib/telemetry/types';
 import styles from './Monitor.module.css';
@@ -49,28 +61,62 @@ export default function RuntimeMonitorPage() {
   const [runningOllamaModels, setRunningOllamaModels] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Test Once State
+  const [showTestDropdown, setShowTestDropdown] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testQuery, setTestQuery] = useState(DEFAULT_TEST_QUERY);
+  const [selectedModelInfo, setSelectedModelInfo] = useState<ModelInfoTelemetry | null>(null);
+  const [isTestRunning, setIsTestRunning] = useState(false);
+  const [currentTestResult, setCurrentTestResult] = useState<TestOnceResult | null>(null);
+  const [testHistory, setTestHistory] = useState<TestOnceResult[]>([]);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
+  const [jsonCopied, setJsonCopied] = useState(false);
+  const [responseExpanded, setResponseExpanded] = useState(true);
+  const [telemetryRawExpanded, setTelemetryRawExpanded] = useState(true);
+  const [testErrorMessage, setTestErrorMessage] = useState<string | null>(null);
+
   const activeModelId = LocalAIConfig.getActiveModelId();
 
   const loadData = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [detectedCaps, runningModels] = await Promise.all([
+      const [detectedCaps, runningModels, modelInfo, history] = await Promise.all([
         detectDeviceCapabilities().catch(() => null),
         OllamaClient.listRunningModels().catch(() => []),
+        TestOnceRunner.getCurrentlySelectedModelInfo().catch(() => null),
+        TestHistoryStorage.getTestResults().catch(() => []),
       ]);
       setCaps(detectedCaps);
       setRunningOllamaModels(runningModels);
+      setSelectedModelInfo(modelInfo);
+      setTestHistory(history);
+      if (history.length > 0 && !currentTestResult) {
+        setCurrentTestResult(history[0]);
+      }
       refreshTelemetry();
     } finally {
       setRefreshing(false);
     }
-  }, [refreshTelemetry]);
+  }, [currentTestResult, refreshTelemetry]);
 
   useEffect(() => {
     loadData();
     const interval = setInterval(loadData, 5000);
     return () => clearInterval(interval);
   }, [loadData]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    if (!showTestDropdown) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`.${styles.dropdownContainer}`)) {
+        setShowTestDropdown(false);
+      }
+    };
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [showTestDropdown]);
 
   const toggleExpand = (id: string) => {
     setExpandedProcessId((prev) => (prev === id ? null : id));
@@ -82,6 +128,83 @@ export default function RuntimeMonitorPage() {
       loadData();
     }
   };
+
+  // ── Test Once Execution Handlers ───────────────────────────────
+  const handleOpenTestDialog = async (openWithDefaultQuery = false) => {
+    setShowTestDropdown(false);
+    if (openWithDefaultQuery && !testQuery) {
+      setTestQuery(DEFAULT_TEST_QUERY);
+    }
+    const modelInfo = await TestOnceRunner.getCurrentlySelectedModelInfo().catch(() => null);
+    setSelectedModelInfo(modelInfo);
+    setShowTestModal(true);
+  };
+
+  const handleRunTest = async () => {
+    if (isTestRunning || !testQuery.trim()) return;
+    setIsTestRunning(true);
+    setTestErrorMessage(null);
+
+    try {
+      const result = await TestOnceRunner.runTestOnce({
+        query: testQuery,
+      });
+      setCurrentTestResult(result);
+      setSelectedHistoryId(result.testId);
+      const updatedHistory = await TestHistoryStorage.getTestResults();
+      setTestHistory(updatedHistory);
+      refreshTelemetry();
+    } catch (err: any) {
+      setTestErrorMessage(err instanceof Error ? err.message : String(err));
+      const updatedHistory = await TestHistoryStorage.getTestResults();
+      setTestHistory(updatedHistory);
+      if (updatedHistory.length > 0) {
+        setCurrentTestResult(updatedHistory[0]);
+      }
+    } finally {
+      setIsTestRunning(false);
+    }
+  };
+
+  const handleCancelTest = () => {
+    TestOnceRunner.cancelActiveTest();
+  };
+
+  const handleResetQuery = () => {
+    setTestQuery(DEFAULT_TEST_QUERY);
+  };
+
+  const handleCopyJson = async () => {
+    if (!activeDisplayResult) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(activeDisplayResult, null, 2));
+      setJsonCopied(true);
+      setTimeout(() => setJsonCopied(false), 2000);
+    } catch (err) {
+      console.warn('Failed to copy JSON:', err);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (confirm('Clear all recorded Test Once telemetry history?')) {
+      await TestHistoryStorage.clearTestHistory();
+      setTestHistory([]);
+      setCurrentTestResult(null);
+      setSelectedHistoryId(null);
+    }
+  };
+
+  const handleSelectHistory = (id: string) => {
+    setSelectedHistoryId(id);
+    const found = testHistory.find((t) => t.testId === id);
+    if (found) {
+      setCurrentTestResult(found);
+    }
+  };
+
+  const activeDisplayResult = selectedHistoryId
+    ? testHistory.find((t) => t.testId === selectedHistoryId) || currentTestResult
+    : currentTestResult;
 
   // Memory Calculations
   const jsHeapUsed = caps?.memoryInfo?.jsHeapUsedMb;
@@ -105,6 +228,46 @@ export default function RuntimeMonitorPage() {
         </div>
 
         <div className={styles.actions}>
+          {/* Test Once Dropdown Action */}
+          <div className={styles.dropdownContainer}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowTestDropdown((prev) => !prev)}
+              disabled={isTestRunning}
+            >
+              <Play size={14} />
+              <span>Test Once</span>
+              <ChevronDown size={13} />
+            </Button>
+            {showTestDropdown && (
+              <div className={styles.dropdownMenu}>
+                <button
+                  type="button"
+                  className={styles.dropdownItem}
+                  onClick={() => handleOpenTestDialog(false)}
+                >
+                  <Play size={14} style={{ color: 'var(--color-primary)', marginTop: 2, flexShrink: 0 }} />
+                  <div>
+                    <strong>Test Once</strong>
+                    <span>Execute baseline inference test on selected model</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={styles.dropdownItem}
+                  onClick={() => handleOpenTestDialog(true)}
+                >
+                  <FileText size={14} style={{ color: 'var(--color-primary)', marginTop: 2, flexShrink: 0 }} />
+                  <div>
+                    <strong>Default Test Query</strong>
+                    <span>Inspect and edit the diagnostic test query</span>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
           <Button variant="outline" size="sm" onClick={loadData} disabled={refreshing}>
             <RefreshCw size={14} className={refreshing ? 'spin' : ''} />
             <span>Refresh</span>
@@ -113,7 +276,7 @@ export default function RuntimeMonitorPage() {
             <Trash2 size={14} />
             <span>Clear Completed</span>
           </Button>
-          <Button href="/settings/yai-local" variant="primary" size="sm">
+          <Button href="/settings/yai-local" variant="outline" size="sm">
             <Cpu size={14} />
             <span>Device Intelligence & Setup</span>
           </Button>
@@ -299,6 +462,77 @@ export default function RuntimeMonitorPage() {
         </div>
       </section>
 
+      {/* ── Section: Latest Test Once Baseline (if available) ──── */}
+      {activeDisplayResult && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.sectionTitleGroup}>
+              <Play size={18} style={{ color: 'var(--color-primary)' }} />
+              <h2 className={styles.sectionTitle}>
+                Latest Baseline Telemetry — {activeDisplayResult.model.name}
+              </h2>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span
+                className={`${styles.opStatusPill} ${
+                  activeDisplayResult.execution.status === 'COMPLETED'
+                    ? styles.statusCompleted
+                    : activeDisplayResult.execution.status === 'FAILED'
+                    ? styles.statusFailed
+                    : styles.statusCancelled
+                }`}
+              >
+                {activeDisplayResult.execution.status}
+              </span>
+              <Button variant="outline" size="sm" onClick={() => setShowTestModal(true)}>
+                <span>View Full Telemetry & Diagnostics</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className={styles.summaryGrid}>
+            <div className={styles.summaryTile}>
+              <span className={styles.summaryTileLabel}>Execution Duration</span>
+              <span className={styles.summaryTileValue}>{activeDisplayResult.execution.durationMs} ms</span>
+            </div>
+            <div className={styles.summaryTile}>
+              <span className={styles.summaryTileLabel}>Peak Heap Memory</span>
+              <span className={styles.summaryTileValue}>
+                {activeDisplayResult.queryResources.peakMemoryDuringBytes
+                  ? `${(activeDisplayResult.queryResources.peakMemoryDuringBytes / (1024 * 1024)).toFixed(1)} MB`
+                  : 'Unavailable'}
+              </span>
+            </div>
+            <div className={styles.summaryTile}>
+              <span className={styles.summaryTileLabel}>Incremental Peak</span>
+              <span className={styles.summaryTileValue}>
+                {activeDisplayResult.queryResources.incrementalPeakMemoryBytes
+                  ? `${(activeDisplayResult.queryResources.incrementalPeakMemoryBytes / (1024 * 1024)).toFixed(1)} MB`
+                  : '0 MB'}
+              </span>
+            </div>
+            <div className={styles.summaryTile}>
+              <span className={styles.summaryTileLabel}>Tokens (In / Out)</span>
+              <span className={styles.summaryTileValue}>
+                {activeDisplayResult.tokens.input} in / {activeDisplayResult.tokens.output} out
+              </span>
+            </div>
+            <div className={styles.summaryTile}>
+              <span className={styles.summaryTileLabel}>Components Accounted</span>
+              <span className={styles.summaryTileValue}>
+                {activeDisplayResult.measurementCoverage.totalRegisteredComponents} registered ({activeDisplayResult.queryResources.usedComponentsCount} used)
+              </span>
+            </div>
+            <div className={styles.summaryTile}>
+              <span className={styles.summaryTileLabel}>Measurement Coverage</span>
+              <span className={styles.summaryTileValue}>
+                {activeDisplayResult.measurementCoverage.coveragePercentage}%
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Section: Active & Recent Operations ────────────────── */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
@@ -316,7 +550,7 @@ export default function RuntimeMonitorPage() {
             <Activity size={32} className={styles.emptyStateIcon} />
             <p style={{ margin: 0, fontWeight: 500 }}>No operations recorded in this session</p>
             <p style={{ fontSize: '0.8125rem', margin: '4px 0 0' }}>
-              Operations like model downloads, benchmark runs, and local token generation will appear here in real time.
+              Operations like model downloads, benchmark runs, Test Once baseline runs, and local token generation will appear here in real time.
             </p>
           </div>
         ) : (
@@ -526,6 +760,351 @@ export default function RuntimeMonitorPage() {
           </div>
         )}
       </section>
+
+      {/* ── Test Once Diagnostic Runner Modal ─────────────────── */}
+      {showTestModal && (
+        <div className={styles.modalOverlay} onClick={() => !isTestRunning && setShowTestModal(false)}>
+          <div className={styles.modalLarge} onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className={styles.modalHeader}>
+              <div>
+                <div className={styles.modalTitleGroup}>
+                  <Play size={18} style={{ color: 'var(--color-primary)' }} />
+                  <h3 className={styles.modalTitle}>Test Once — Resource Telemetry Baseline</h3>
+                </div>
+                <p className={styles.modalSubtitle}>
+                  Execute genuine inference against the active AI model to capture exact memory, compute, and lifecycle telemetry.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTestModal(false)}
+                disabled={isTestRunning}
+              >
+                <X size={14} />
+                <span>Close</span>
+              </Button>
+            </div>
+
+            {/* Model & Runtime Identification */}
+            <div className={styles.modelBadgeBox}>
+              <div className={styles.modelBadgeItem}>
+                <span className={styles.modelBadgeLabel}>Active Provider</span>
+                <span className={styles.modelBadgeValue}>
+                  {selectedModelInfo?.provider.toUpperCase() || 'LITERT-LM'}
+                </span>
+              </div>
+              <div className={styles.modelBadgeItem}>
+                <span className={styles.modelBadgeLabel}>Selected Model</span>
+                <span className={styles.modelBadgeValue}>
+                  {selectedModelInfo?.name || activeModelId || 'gemma-4-e2b-it-web'}
+                </span>
+              </div>
+              <div className={styles.modelBadgeItem}>
+                <span className={styles.modelBadgeLabel}>Version / Quantization</span>
+                <span className={styles.modelBadgeValue}>
+                  {selectedModelInfo?.quantization || selectedModelInfo?.version || 'Standard'}
+                </span>
+              </div>
+              <div className={styles.modelBadgeItem}>
+                <span className={styles.modelBadgeLabel}>Inference Backend</span>
+                <span className={styles.modelBadgeValue}>
+                  {selectedModelInfo?.backend || 'LiteRT WebGPU Engine'}
+                </span>
+              </div>
+            </div>
+
+            {/* Query Editor */}
+            <div className={styles.querySection}>
+              <div className={styles.queryHeaderRow}>
+                <label className={styles.queryLabel}>Diagnostic Query Prompt:</label>
+                <div className={styles.queryControls}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetQuery}
+                    disabled={isTestRunning || testQuery === DEFAULT_TEST_QUERY}
+                  >
+                    <span>Reset to Default</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTestQuery('')}
+                    disabled={isTestRunning || !testQuery}
+                  >
+                    <span>Clear</span>
+                  </Button>
+                </div>
+              </div>
+              <textarea
+                value={testQuery}
+                onChange={(e) => setTestQuery(e.target.value)}
+                disabled={isTestRunning}
+                className={styles.queryTextarea}
+                rows={4}
+                placeholder="Enter query for inference test..."
+              />
+            </div>
+
+            {/* Action Bar (Go/Run + Cancel) */}
+            <div className={styles.runActionsBar}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleRunTest}
+                  disabled={isTestRunning || !testQuery.trim()}
+                >
+                  <Play size={14} className={isTestRunning ? 'spin' : ''} />
+                  <span>{isTestRunning ? 'Running Test...' : 'Go / Run Test'}</span>
+                </Button>
+                {isTestRunning && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleCancelTest}
+                  >
+                    <XCircle size={14} />
+                    <span>Cancel Test</span>
+                  </Button>
+                )}
+              </div>
+
+              {isTestRunning && (
+                <div className={styles.runningIndicator}>
+                  <RefreshCw size={14} className="spin" />
+                  <span>Executing real inference & collecting telemetry...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Error Banner */}
+            {testErrorMessage && (
+              <div
+                style={{
+                  background: 'rgba(198, 40, 40, 0.1)',
+                  border: '1px solid var(--color-destructive)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: 'var(--space-2) var(--space-3)',
+                  marginBottom: 'var(--space-4)',
+                  fontSize: '0.8125rem',
+                  color: 'var(--color-destructive)',
+                }}
+              >
+                <strong>Inference Failure:</strong> {testErrorMessage}
+              </div>
+            )}
+
+            {/* Test History Selector if past runs exist */}
+            {testHistory.length > 0 && (
+              <div className={styles.historySelectorRow}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Clock size={14} style={{ color: 'var(--color-primary)' }} />
+                  <strong>Test Run History ({testHistory.length}):</strong>
+                  <select
+                    className={styles.historySelect}
+                    value={activeDisplayResult?.testId || ''}
+                    onChange={(e) => handleSelectHistory(e.target.value)}
+                  >
+                    {testHistory.map((t, idx) => (
+                      <option key={t.testId} value={t.testId}>
+                        {idx === 0 ? 'Latest: ' : ''}
+                        {t.model.name} — {new Date(t.execution.startedAt).toLocaleTimeString()} ({t.execution.status})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleClearHistory} disabled={isTestRunning}>
+                  <Trash2 size={12} />
+                  <span>Clear History</span>
+                </Button>
+              </div>
+            )}
+
+            {/* If a test result is available to inspect */}
+            {activeDisplayResult && (
+              <>
+                {/* Level A: Query Summary */}
+                <div className={styles.summarySection}>
+                  <div className={styles.summaryHeader}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle2
+                        size={16}
+                        style={{
+                          color:
+                            activeDisplayResult.execution.status === 'COMPLETED'
+                              ? 'var(--color-success)'
+                              : 'var(--color-destructive)',
+                        }}
+                      />
+                      <h4 className={styles.summaryTitle}>Query Resource Summary</h4>
+                    </div>
+                    <span
+                      className={`${styles.opStatusPill} ${
+                        activeDisplayResult.execution.status === 'COMPLETED'
+                          ? styles.statusCompleted
+                          : activeDisplayResult.execution.status === 'FAILED'
+                          ? styles.statusFailed
+                          : styles.statusCancelled
+                      }`}
+                    >
+                      {activeDisplayResult.execution.status}
+                    </span>
+                  </div>
+
+                  {/* Summary Metric Grid */}
+                  <div className={styles.summaryGrid}>
+                    <div className={styles.summaryTile}>
+                      <span className={styles.summaryTileLabel}>Elapsed Duration</span>
+                      <span className={styles.summaryTileValue}>
+                        {activeDisplayResult.execution.durationMs} ms
+                      </span>
+                    </div>
+                    <div className={styles.summaryTile}>
+                      <span className={styles.summaryTileLabel}>Baseline JS Heap</span>
+                      <span className={styles.summaryTileValue}>
+                        {activeDisplayResult.queryResources.baselineApplicationMemoryBytes
+                          ? `${(activeDisplayResult.queryResources.baselineApplicationMemoryBytes / (1024 * 1024)).toFixed(1)} MB`
+                          : 'Unavailable'}
+                      </span>
+                    </div>
+                    <div className={styles.summaryTile}>
+                      <span className={styles.summaryTileLabel}>Peak Heap</span>
+                      <span className={styles.summaryTileValue}>
+                        {activeDisplayResult.queryResources.peakMemoryDuringBytes
+                          ? `${(activeDisplayResult.queryResources.peakMemoryDuringBytes / (1024 * 1024)).toFixed(1)} MB`
+                          : 'Unavailable'}
+                      </span>
+                    </div>
+                    <div className={styles.summaryTile}>
+                      <span className={styles.summaryTileLabel}>Incremental Peak</span>
+                      <span className={styles.summaryTileValue}>
+                        {activeDisplayResult.queryResources.incrementalPeakMemoryBytes
+                          ? `${(activeDisplayResult.queryResources.incrementalPeakMemoryBytes / (1024 * 1024)).toFixed(1)} MB`
+                          : '0 MB'}
+                      </span>
+                    </div>
+                    <div className={styles.summaryTile}>
+                      <span className={styles.summaryTileLabel}>Retained Memory</span>
+                      <span className={styles.summaryTileValue}>
+                        {activeDisplayResult.queryResources.memoryRetainedAfterBytes
+                          ? `${(activeDisplayResult.queryResources.memoryRetainedAfterBytes / (1024 * 1024)).toFixed(1)} MB`
+                          : '0 MB'}
+                      </span>
+                    </div>
+                    <div className={styles.summaryTile}>
+                      <span className={styles.summaryTileLabel}>Tokens (In / Out)</span>
+                      <span className={styles.summaryTileValue}>
+                        {activeDisplayResult.tokens.input} in / {activeDisplayResult.tokens.output} out
+                      </span>
+                    </div>
+                    {activeDisplayResult.tokens.tokensPerSecond !== null && (
+                      <div className={styles.summaryTile}>
+                        <span className={styles.summaryTileLabel}>Generation Speed</span>
+                        <span className={styles.summaryTileValue}>
+                          {activeDisplayResult.tokens.tokensPerSecond} tok/s
+                        </span>
+                      </div>
+                    )}
+                    {activeDisplayResult.queryResources.gpuMemoryAllocationBytes && (
+                      <div className={styles.summaryTile}>
+                        <span className={styles.summaryTileLabel}>VRAM Allocation</span>
+                        <span className={styles.summaryTileValue}>
+                          {(activeDisplayResult.queryResources.gpuMemoryAllocationBytes / (1024 * 1024)).toFixed(0)} MB
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Component Participation Counts */}
+                  <div className={styles.componentBreakdownRow}>
+                    <span className={styles.componentBreakdownTag} style={{ color: 'var(--color-primary)' }}>
+                      Used: {activeDisplayResult.queryResources.usedComponentsCount}
+                    </span>
+                    <span>•</span>
+                    <span className={styles.componentBreakdownTag} style={{ color: 'var(--color-muted-foreground)' }}>
+                      Not Used: {activeDisplayResult.queryResources.notUsedComponentsCount}
+                    </span>
+                    <span>•</span>
+                    <span className={styles.componentBreakdownTag} style={{ color: 'var(--color-success)' }}>
+                      Measured Zero: {activeDisplayResult.queryResources.measuredZeroComponentsCount}
+                    </span>
+                    <span>•</span>
+                    <span className={styles.componentBreakdownTag} style={{ color: 'var(--color-warning)' }}>
+                      Unavailable: {activeDisplayResult.queryResources.unavailableMeasurementsCount}
+                    </span>
+                    <span>•</span>
+                    <span className={styles.componentBreakdownTag} style={{ color: 'var(--color-muted-foreground)' }}>
+                      Unsupported: {activeDisplayResult.queryResources.notSupportedMeasurementsCount}
+                    </span>
+                    {activeDisplayResult.queryResources.errorMeasurementsCount > 0 && (
+                      <>
+                        <span>•</span>
+                        <span className={styles.componentBreakdownTag} style={{ color: 'var(--color-destructive)' }}>
+                          Errors: {activeDisplayResult.queryResources.errorMeasurementsCount}
+                        </span>
+                      </>
+                    )}
+                    <span>•</span>
+                    <span className={styles.componentBreakdownTag}>
+                      Coverage: {activeDisplayResult.measurementCoverage.coveragePercentage}%
+                    </span>
+                  </div>
+
+                  {/* Response Text Preview (if generated) */}
+                  {activeDisplayResult.response?.content && (
+                    <div className={styles.responsePreviewBox}>
+                      <div
+                        className={styles.responsePreviewHeader}
+                        onClick={() => setResponseExpanded((prev) => !prev)}
+                      >
+                        <span>Model Output Response ({activeDisplayResult.response.content.length} chars)</span>
+                        {responseExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </div>
+                      {responseExpanded && (
+                        <div className={styles.responsePreviewText}>
+                          {activeDisplayResult.response.content}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Level B: Complete Raw Telemetry (JSON Viewer) */}
+                <div className={styles.rawTelemetrySection}>
+                  <div className={styles.rawTelemetryHeader}>
+                    <h4 className={styles.rawTelemetryTitle}>
+                      <Code size={14} style={{ color: 'var(--color-primary)' }} />
+                      <span>Complete Raw Telemetry (Structured JSON)</span>
+                    </h4>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button variant="outline" size="sm" onClick={handleCopyJson}>
+                        {jsonCopied ? <Check size={13} style={{ color: 'var(--color-success)' }} /> : <Copy size={13} />}
+                        <span>{jsonCopied ? 'Copied' : 'Copy JSON'}</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTelemetryRawExpanded((prev) => !prev)}
+                      >
+                        {telemetryRawExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                        <span>{telemetryRawExpanded ? 'Collapse' : 'Expand'}</span>
+                      </Button>
+                    </div>
+                  </div>
+                  {telemetryRawExpanded && (
+                    <pre className={styles.jsonViewerPre}>
+                      {JSON.stringify(activeDisplayResult, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
