@@ -416,113 +416,104 @@
   opacity: 0.5;
 }
 
-/* ─── Test Once Action Dropdown & Modal ─────────────────── */
-.dropdownContainer {
-  position: relative;
-  display: inline-block;
+/* ─── Collapsible Sections & Headers ────────────────────── */
+.sectionHeaderClickable {
+  cursor: pointer;
+  user-select: none;
 }
 
-.dropdownMenu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
-  z-index: 50;
-  min-width: 260px;
-  padding: var(--space-1);
+.sectionHeaderClickable:hover .sectionTitle {
+  color: var(--color-primary);
+}
+
+.headerActionsRight {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--space-2);
 }
 
-.dropdownItem {
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-background);
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggleBtn:hover {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  border-color: var(--color-primary);
+}
+
+/* ─── GitHub Persistence Banners & Feedback ─────────────── */
+.githubSuccessBanner {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-2);
-  width: 100%;
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  background: transparent;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(22, 128, 60, 0.08);
+  border: 1px solid rgba(22, 128, 60, 0.3);
   color: var(--color-foreground);
-  transition: background 0.15s ease;
-}
-
-.dropdownItem:hover {
-  background: var(--color-muted);
-}
-
-.dropdownItem strong {
-  display: block;
+  margin-bottom: var(--space-3);
   font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.githubErrorBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(198, 40, 40, 0.08);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  color: var(--color-destructive);
+  margin-bottom: var(--space-3);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.githubLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-primary);
+  text-decoration: underline;
+  margin-left: var(--space-2);
   font-weight: 600;
-  color: var(--color-foreground);
 }
 
-.dropdownItem span {
-  display: block;
-  font-size: 0.6875rem;
+.githubLink:hover {
+  opacity: 0.85;
+}
+
+.dismissBtn {
+  background: transparent;
+  border: none;
   color: var(--color-muted-foreground);
-  margin-top: 1px;
-}
-
-/* Modal Overlay & Card */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(2px);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
-  padding: var(--space-4);
+  flex-shrink: 0;
 }
 
-.modalLarge {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 920px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: var(--space-5);
-  box-shadow: var(--shadow-xl, 0 12px 32px rgba(0, 0, 0, 0.25));
-}
-
-.modalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.modalTitleGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.modalTitle {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0;
+.dismissBtn:hover {
   color: var(--color-foreground);
+  background: var(--color-muted);
 }
 
-.modalSubtitle {
-  font-size: 0.75rem;
-  color: var(--color-muted-foreground);
-  margin: 2px 0 0;
-}
+/* ─── Baseline Telemetry Components (In-Page) ───────────── */
 
 .modelBadgeBox {
   background: var(--color-muted);

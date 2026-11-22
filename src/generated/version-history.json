@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-22T19:03:52.344Z",
-  "currentVersion": "v0.19",
+  "generatedAt": "2026-11-22T20:28:05.104Z",
+  "currentVersion": "v0.20",
   "currentMajor": 0,
-  "totalVersions": 19,
+  "totalVersions": 20,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -23,6 +23,98 @@
     }
   ],
   "versions": [
+    {
+      "version": "v0.20",
+      "major": 0,
+      "sequence": 20,
+      "commitHash": "d88d2c9956ef51292ec9a466d39295fb73bd17fa",
+      "shortCommitHash": "d88d2c9",
+      "subject": "Add \"Test Once\" to AI Runtime Memory Monitor",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-23T00:44:05+05:30",
+      "committedAt": "2026-11-23T00:44:05+05:30",
+      "changeType": [
+        "test",
+        "ui"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-23-add-test-once-memory-monitor.md",
+        "src/app/(app)/monitor/Monitor.module.css",
+        "src/app/(app)/monitor/page.tsx",
+        "src/generated/version-history.json",
+        "src/lib/telemetry/test-runner/index.ts",
+        "src/lib/telemetry/test-runner/registered-components.ts",
+        "src/lib/telemetry/test-runner/telemetry-sampler.ts",
+        "src/lib/telemetry/test-runner/test-history-storage.ts",
+        "src/lib/telemetry/test-runner/test-runner.ts",
+        "src/lib/telemetry/test-runner/types.ts",
+        "tests/telemetry/test-once-runner.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-23-add-test-once-memory-monitor.md",
+          "insertions": 714,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/monitor/Monitor.module.css",
+          "insertions": 365,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/monitor/page.tsx",
+          "insertions": 583,
+          "deletions": 4
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 8,
+          "deletions": 8
+        },
+        {
+          "path": "src/lib/telemetry/test-runner/index.ts",
+          "insertions": 9,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/test-runner/registered-components.ts",
+          "insertions": 601,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/test-runner/telemetry-sampler.ts",
+          "insertions": 165,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/test-runner/test-history-storage.ts",
+          "insertions": 145,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/test-runner/test-runner.ts",
+          "insertions": 793,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/telemetry/test-runner/types.ts",
+          "insertions": 199,
+          "deletions": 0
+        },
+        {
+          "path": "tests/telemetry/test-once-runner.test.ts",
+          "insertions": 278,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 11,
+      "insertions": 3860,
+      "deletions": 12,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
     {
       "version": "v0.19",
       "major": 0,
