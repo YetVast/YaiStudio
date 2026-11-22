@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Folder, Plus, ChevronRight, MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import type { WorkspaceData, ConversationIndexEntry } from '@/types/personal-intelligence';
+import { errorHandler } from '@/lib/errors';
 import styles from './Workspaces.module.css';
 
 export default function WorkspacesPage() {
@@ -39,8 +40,23 @@ export default function WorkspacesPage() {
         const convData = await convRes.json();
         setConversations(convData.conversations || []);
       }
-    } catch {
-      setErrorMessage('Failed to load workspaces');
+    } catch (err: any) {
+      const msg = 'Failed to load workspaces';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Workspaces Retrieval Failed',
+        message: msg,
+        category: 'DATABASE',
+        source: {
+          module: 'Workspaces',
+          component: 'Workspace Explorer',
+          operation: 'Fetch Workspaces',
+        },
+        retryHandler: async () => {
+          await fetchData();
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -75,8 +91,20 @@ export default function WorkspacesPage() {
       setNewWorkspaceName('');
       setNewDescription('');
       await fetchData();
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Creation failed');
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Creation failed';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Create Workspace Failed',
+        message: msg,
+        category: 'DATABASE',
+        source: {
+          module: 'Workspaces',
+          component: 'New Workspace Modal',
+          operation: 'Create Workspace',
+        },
+      });
     } finally {
       setCreating(false);
     }

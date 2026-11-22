@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { MemoryRecord, MemoryCandidate, MemoryType } from '@/types/personal-intelligence';
 import Button from '@/components/ui/Button';
+import { errorHandler } from '@/lib/errors';
 import styles from './Memory.module.css';
 
 const CATEGORIES: { id: MemoryType; label: string; desc: string }[] = [
@@ -46,9 +47,26 @@ export default function MemoryPage() {
       if (res.ok) {
         const data = await res.json();
         setRecords(data.records || []);
+      } else {
+        throw new Error(`HTTP ${res.status}: Failed to load ${type} records`);
       }
-    } catch {
-      setErrorMessage(`Failed to load ${type} records`);
+    } catch (err: any) {
+      const msg = `Failed to load ${type} records`;
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Memory Retrieval Failure',
+        message: msg,
+        category: 'DATABASE',
+        source: {
+          module: 'Personal Memory',
+          component: 'Memory Explorer',
+          operation: `Fetch ${type} records`,
+        },
+        retryHandler: async () => {
+          await fetchCategory(type);
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -62,9 +80,26 @@ export default function MemoryPage() {
       if (res.ok) {
         const data = await res.json();
         setCandidates(data.candidates || []);
+      } else {
+        throw new Error(`HTTP ${res.status}: Failed to load memory candidates`);
       }
-    } catch {
-      setErrorMessage('Failed to load memory candidates');
+    } catch (err: any) {
+      const msg = 'Failed to load memory candidates';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Memory Candidates Failure',
+        message: msg,
+        category: 'DATABASE',
+        source: {
+          module: 'Personal Memory',
+          component: 'Candidate Review',
+          operation: 'Fetch Candidates',
+        },
+        retryHandler: async () => {
+          await fetchCandidates();
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -103,8 +138,20 @@ export default function MemoryPage() {
       setNewContent('');
       setNewProvenance('');
       await fetchCategory(activeTab);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to save memory');
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Failed to save memory';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Save Memory Record Failed',
+        message: msg,
+        category: 'DATABASE',
+        source: {
+          module: 'Personal Memory',
+          component: 'Manual Entry Modal',
+          operation: `Create ${activeTab} Record`,
+        },
+      });
     } finally {
       setSaving(false);
     }
@@ -128,8 +175,23 @@ export default function MemoryPage() {
       setCandidates((prev) =>
         prev.map((c) => (c.id === candidateId ? { ...c, status: decision } : c)),
       );
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Review action failed');
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Review action failed';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Candidate Review Action Failed',
+        message: msg,
+        category: 'API',
+        source: {
+          module: 'Personal Memory',
+          component: 'Candidate Review',
+          operation: `Review Candidate (${decision})`,
+        },
+        retryHandler: async () => {
+          await handleReviewCandidate(candidateId, decision);
+        },
+      });
     }
   };
 

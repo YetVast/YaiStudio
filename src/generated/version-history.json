@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-22T20:28:05.104Z",
-  "currentVersion": "v0.20",
+  "generatedAt": "2026-11-22T20:56:13.955Z",
+  "currentVersion": "v0.21",
   "currentMajor": 0,
-  "totalVersions": 20,
+  "totalVersions": 21,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -23,6 +23,68 @@
     }
   ],
   "versions": [
+    {
+      "version": "v0.21",
+      "major": 0,
+      "sequence": 21,
+      "commitHash": "b52040a75b63792d63237e932195d4081fa05831",
+      "shortCommitHash": "b52040a",
+      "subject": "AI Runtime Monitor UI Restructuring",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-23T02:00:21+05:30",
+      "committedAt": "2026-11-23T02:00:21+05:30",
+      "changeType": [
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-23-runtime-monitor-ui-restructuring.md",
+        "src/app/(app)/monitor/Monitor.module.css",
+        "src/app/(app)/monitor/page.tsx",
+        "src/app/api/telemetry/save-github/route.ts",
+        "src/generated/version-history.json",
+        "tests/telemetry/save-github.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-23-runtime-monitor-ui-restructuring.md",
+          "insertions": 314,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/monitor/Monitor.module.css",
+          "insertions": 68,
+          "deletions": 77
+        },
+        {
+          "path": "src/app/(app)/monitor/page.tsx",
+          "insertions": 653,
+          "deletions": 592
+        },
+        {
+          "path": "src/app/api/telemetry/save-github/route.ts",
+          "insertions": 168,
+          "deletions": 0
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 95,
+          "deletions": 3
+        },
+        {
+          "path": "tests/telemetry/save-github.test.ts",
+          "insertions": 229,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 6,
+      "insertions": 1527,
+      "deletions": 672,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
     {
       "version": "v0.20",
       "major": 0,

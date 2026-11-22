@@ -30,6 +30,7 @@ import {
   type OllamaRunningModel,
 } from '@/lib/inference/runtimes/ollama-client';
 import type { DeviceCapabilityReport, InstalledModelRecord, LocalProviderStatus } from '@/lib/inference/types';
+import { errorHandler } from '@/lib/errors';
 import styles from './Providers.module.css';
 
 export default function ProvidersPage() {
@@ -108,8 +109,23 @@ export default function ProvidersPage() {
 
       // Probe Ollama in background
       handlePingOllama();
-    } catch {
-      setErrorMessage('Failed to load provider configuration');
+    } catch (err: any) {
+      const msg = 'Failed to load provider configuration';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Provider Configuration Failure',
+        message: msg,
+        category: 'API',
+        source: {
+          module: 'Model Providers',
+          component: 'Provider Configuration',
+          operation: 'Fetch Providers',
+        },
+        retryHandler: async () => {
+          await fetchProviders();
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -150,8 +166,20 @@ export default function ProvidersPage() {
       setActiveProvider(null);
       setEnteredKey('');
       await fetchProviders();
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Key validation failed');
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Key validation failed';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Provider Key Validation Failed',
+        message: msg,
+        category: 'AUTHENTICATION',
+        source: {
+          module: 'Model Providers',
+          component: 'Key Store',
+          operation: `Validate & Save Key (${activeProvider || 'Unknown'})`,
+        },
+      });
     } finally {
       setSavingKey(false);
     }

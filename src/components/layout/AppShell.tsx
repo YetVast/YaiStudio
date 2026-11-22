@@ -6,7 +6,9 @@ import { usePathname } from 'next/navigation';
 import { Moon, Sun, Menu } from 'lucide-react';
 import { ThemeProvider, useTheme } from '@/components/providers/ThemeProvider';
 import { TelemetryProvider } from '@/lib/telemetry/telemetry-context';
+import { ErrorNotificationProvider } from '@/components/providers/ErrorNotificationProvider';
 import ProcessIndicator from '@/components/telemetry/ProcessIndicator';
+import NotificationBellButton from '@/components/notifications/NotificationBellButton';
 import AppNav from '@/components/navigation/AppNav';
 import styles from './AppShell.module.css';
 
@@ -60,6 +62,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
         </div>
         <div className={styles.headerRight}>
           <ProcessIndicator />
+          <NotificationBellButton />
           <button
             className={styles.iconButton}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
@@ -106,7 +109,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <TelemetryProvider>
-        <ShellInner>{children}</ShellInner>
+        <ErrorNotificationProvider>
+          <ShellInner>{children}</ShellInner>
+        </ErrorNotificationProvider>
       </TelemetryProvider>
     </ThemeProvider>
   );

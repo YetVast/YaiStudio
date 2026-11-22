@@ -122,7 +122,7 @@ describe('API: /api/telemetry/save-github', () => {
     vi.spyOn(personalStorage, 'verifyRepository').mockResolvedValue({
       exists: false,
       isPrivate: false,
-      hasWriteAccess: false,
+      ownerMatch: true,
     });
 
     const req = new NextRequest('http://localhost:3000/api/telemetry/save-github', {
@@ -142,16 +142,15 @@ describe('API: /api/telemetry/save-github', () => {
     vi.spyOn(personalStorage, 'verifyRepository').mockResolvedValue({
       exists: true,
       isPrivate: true,
-      hasWriteAccess: true,
+      ownerMatch: true,
     });
 
     // Mock existing file in GitHub
     vi.spyOn(gh, 'getFile').mockResolvedValue({
-      name: 'runtime-telemetry-local-litert-ibm-granite-4-0-350m-20261123-143025.json',
       path: 'telemetry-tests/runtime-telemetry-local-litert-ibm-granite-4-0-350m-20261123-143025.json',
       sha: 'existing_sha_123',
       content: '{}',
-      encoding: 'utf-8',
+      size: 2,
     });
 
     const req = new NextRequest('http://localhost:3000/api/telemetry/save-github', {
@@ -172,7 +171,7 @@ describe('API: /api/telemetry/save-github', () => {
     vi.spyOn(personalStorage, 'verifyRepository').mockResolvedValue({
       exists: true,
       isPrivate: true,
-      hasWriteAccess: true,
+      ownerMatch: true,
     });
 
     // File does not exist yet

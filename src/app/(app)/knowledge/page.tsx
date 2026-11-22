@@ -5,6 +5,7 @@ import { BookOpen, Plus, Search, Tag, ExternalLink, RefreshCw, AlertCircle } fro
 import { formatMarkdown } from '@/lib/client/safe-markdown';
 import type { KnowledgeItem } from '@/types/personal-intelligence';
 import Button from '@/components/ui/Button';
+import { errorHandler } from '@/lib/errors';
 import styles from './Knowledge.module.css';
 
 export default function KnowledgePage() {
@@ -34,9 +35,26 @@ export default function KnowledgePage() {
         if (data.items?.length > 0 && !selectedItem) {
           setSelectedItem(data.items[0]);
         }
+      } else {
+        throw new Error(`HTTP ${res.status}: Failed to load knowledge notes`);
       }
-    } catch {
-      setErrorMessage('Failed to load knowledge notes');
+    } catch (err: any) {
+      const msg = 'Failed to load knowledge notes';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Knowledge Base Retrieval Failed',
+        message: msg,
+        category: 'DATABASE',
+        source: {
+          module: 'Knowledge',
+          component: 'Knowledge Explorer',
+          operation: 'Fetch Items',
+        },
+        retryHandler: async () => {
+          await fetchItems();
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -84,8 +102,20 @@ export default function KnowledgePage() {
       setNewTags('');
       await fetchItems();
       setSelectedItem(created);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Save failed');
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : 'Save failed';
+      setErrorMessage(msg);
+      errorHandler.captureError({
+        error: err,
+        title: 'Save Knowledge Note Failed',
+        message: msg,
+        category: 'DATABASE',
+        source: {
+          module: 'Knowledge',
+          component: 'Note Editor',
+          operation: 'Create Note',
+        },
+      });
     } finally {
       setSaving(false);
     }

@@ -38,6 +38,7 @@ import {
   type TestOnceResult,
   type ModelInfoTelemetry,
 } from '@/lib/telemetry/test-runner';
+import { errorHandler } from '@/lib/errors';
 import type { DeviceCapabilityReport } from '@/lib/inference/types';
 import type { RuntimeProcess } from '@/lib/telemetry/types';
 import styles from './Monitor.module.css';
@@ -152,12 +153,48 @@ export default function RuntimeMonitorPage() {
       setTestHistory(updatedHistory);
       refreshTelemetry();
     } catch (err: any) {
-      setTestErrorMessage(err instanceof Error ? err.message : String(err));
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setTestErrorMessage(errorMsg);
       const updatedHistory = await TestHistoryStorage.getTestResults();
       setTestHistory(updatedHistory);
       if (updatedHistory.length > 0) {
         setCurrentTestResult(updatedHistory[0]);
       }
+
+      // Centralized Error Handling & Modal Invocation
+      await errorHandler.captureError({
+        error: err,
+        title: 'Inference Test Execution Failed',
+        message: errorMsg,
+        category: 'MODEL',
+        source: {
+          module: 'AI Runtime Monitor',
+          component: 'Test Once Runner',
+          operation: 'Run Test Once',
+        },
+        details: {
+          provider: selectedModelInfo?.provider,
+          model: selectedModelInfo?.name || activeModelId,
+          endpoint: selectedModelInfo?.backend || 'Local Runtime Engine',
+        },
+        logs: [
+          {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            source: 'Test Once Runner',
+            message: `Starting baseline inference test for model ${selectedModelInfo?.name || activeModelId}...`,
+          },
+          {
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            source: 'Test Once Runner',
+            message: `Inference failed: ${errorMsg}`,
+          },
+        ],
+        retryHandler: async () => {
+          await handleRunTest();
+        },
+      });
     } finally {
       setIsTestRunning(false);
     }
@@ -208,12 +245,13 @@ export default function RuntimeMonitorPage() {
     : currentTestResult;
 
   // ── GitHub Persistence Handler ─────────────────────────────────
-  const handleSaveDetailsToGitHub = async () => {
-    if (!activeDisplayResult || isSavingToGitHub) return;
+  const handleSaveDetailsToGitHub = async (): Promise<boolean> => {
+    if (!activeDisplayResult || isSavingToGitHub) return false;
     setIsSavingToGitHub(true);
     setGithubSaveError(null);
     setGithubSaveResult(null);
 
+    let httpStatus: number | null = null;
     try {
       const res = await fetch('/api/telemetry/save-github', {
         method: 'POST',
@@ -225,9 +263,13 @@ export default function RuntimeMonitorPage() {
         }),
       });
 
+      httpStatus = res.status;
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || `Failed to save telemetry (${res.status})`);
+        const errorMsg = data.error || `Failed to save telemetry (${res.status})`;
+        const httpError = new Error(errorMsg);
+        (httpError as any).status = res.status;
+        throw httpError;
       }
 
       setGithubSaveResult({
@@ -236,8 +278,51 @@ export default function RuntimeMonitorPage() {
         repository: data.repository,
         url: data.url,
       });
+      return true;
     } catch (err: any) {
-      setGithubSaveError(err instanceof Error ? err.message : String(err));
+      const status = (err && (err.status || httpStatus)) || null;
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setGithubSaveError(errorMsg);
+
+      // Centralized Error Handling & Modal Invocation
+      await errorHandler.captureError({
+        error: err,
+        title: 'GitHub Baseline Persistence Failed',
+        message: errorMsg,
+        category: status === 401 ? 'AUTHENTICATION' : status === 403 ? 'AUTHORIZATION' : 'API',
+        source: {
+          module: 'AI Runtime Monitor',
+          component: 'GitHub Persistence',
+          operation: 'Save Baseline Details',
+        },
+        details: {
+          httpStatus: status,
+          endpoint: '/api/telemetry/save-github',
+          provider: activeDisplayResult.model.provider,
+          model: activeDisplayResult.model.name,
+          operationId: activeDisplayResult.testId,
+        },
+        logs: [
+          {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            source: 'GitHub Persistence',
+            message: `Initiating commit of telemetry baseline (${activeDisplayResult.testId}) to repository YVSApps_Data_YaiStudio/telemetry-tests/...`,
+          },
+          {
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            source: 'GitHub Persistence',
+            message: `Save request failed with HTTP ${status || 'unknown'}: ${errorMsg}`,
+          },
+        ],
+        retryHandler: async () => {
+          // Re-executes the exact GitHub save operation using the existing activeDisplayResult!
+          // Guarantees NO re-inference is executed!
+          return await handleSaveDetailsToGitHub();
+        },
+      });
+      return false;
     } finally {
       setIsSavingToGitHub(false);
     }
