@@ -75,7 +75,7 @@ describe('Centralized Error Management — ErrorHandler Orchestration', () => {
 
     // Modal triggered
     expect(modalTriggered).not.toBeNull();
-    expect(modalTriggered?.id).toBe(appError.id);
+    expect((modalTriggered as ApplicationError | null)?.id).toBe(appError.id);
 
     // Retry registered
     expect(RetryManager.isRetryAvailable(appError.id)).toBe(true);

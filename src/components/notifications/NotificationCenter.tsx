@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   AlertCircle,
   AlertTriangle,
@@ -14,6 +15,7 @@ import {
   Eye,
   EyeOff,
   BellOff,
+  Compass,
 } from 'lucide-react';
 import { useErrorNotification } from '@/components/providers/ErrorNotificationProvider';
 import type { AppNotification, NotificationCategory } from '@/lib/errors/types';
@@ -42,6 +44,7 @@ function formatRelativeTime(isoStr: string): string {
 }
 
 export default function NotificationCenter() {
+  const router = useRouter();
   const {
     notifications,
     unreadCount,
@@ -216,6 +219,19 @@ export default function NotificationCenter() {
                     {n.source.operation && (
                       <span className={styles.sourceBadge}>{n.source.operation}</span>
                     )}
+                    {n.resolutionStatus && (
+                      <span
+                        className={`${styles.sourceBadge} ${
+                          n.resolutionStatus === 'RESOLVED'
+                            ? styles.statusResolved
+                            : n.resolutionStatus === 'READY_TO_RETRY'
+                            ? styles.statusReadyToRetry
+                            : styles.statusActionRequired
+                        }`}
+                      >
+                        {n.resolutionStatus.replace(/_/g, ' ')}
+                      </span>
+                    )}
                   </div>
 
                   <p className={styles.cardDesc}>{n.description}</p>
@@ -232,8 +248,22 @@ export default function NotificationCenter() {
                           }
                         }}
                       >
-                        <span>Inspect Error Details</span>
+                        <span>Inspect & Troubleshoot</span>
                         <ExternalLink size={11} />
+                      </button>
+                    )}
+
+                    {n.primaryActionRoute && (
+                      <button
+                        type="button"
+                        className={styles.inspectBtn}
+                        onClick={() => {
+                          closeNotificationCenter();
+                          router.push(n.primaryActionRoute!);
+                        }}
+                      >
+                        <Compass size={11} />
+                        <span>Resolve</span>
                       </button>
                     )}
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   AlertOctagon,
   X,
@@ -14,15 +15,46 @@ import {
   Terminal,
   RefreshCw,
   CheckCircle2,
+  Wrench,
+  Compass,
+  Activity,
+  ExternalLink,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useErrorNotification } from '@/components/providers/ErrorNotificationProvider';
 import styles from './ErrorModal.module.css';
 
+function getResolutionStatusClass(status?: string) {
+  switch (status) {
+    case 'READY_TO_RETRY':
+      return styles.statusReadyToRetry;
+    case 'RESOLVED':
+      return styles.statusResolved;
+    case 'MANUAL_FIX_REQUIRED':
+      return styles.statusManualFix;
+    case 'ACTION_REQUIRED':
+    case 'WAITING_FOR_USER':
+    case 'AUTOMATIC_FIX_AVAILABLE':
+    case 'UNRESOLVED':
+    default:
+      return styles.statusActionRequired;
+  }
+}
+
 export default function ErrorModal() {
-  const { activeErrorModal, closeErrorModal, retryError, isRetrying } = useErrorNotification();
+  const {
+    activeErrorModal,
+    closeErrorModal,
+    retryError,
+    isRetrying,
+    executeDiagnosticAction,
+    isDiagnosing,
+  } = useErrorNotification();
+  const router = useRouter();
+
   const [copiedDetails, setCopiedDetails] = useState(false);
   const [copiedLogs, setCopiedLogs] = useState(false);
+  const [copiedInstructions, setCopiedInstructions] = useState(false);
   const [showStackTrace, setShowStackTrace] = useState(false);
   const [logsExpanded, setLogsExpanded] = useState(true);
 
@@ -76,6 +108,36 @@ export default function ErrorModal() {
       setTimeout(() => setCopiedLogs(false), 2000);
     } catch (err) {
       console.warn('Failed to copy logs:', err);
+    }
+  };
+
+  const handleCopyInstructions = async () => {
+    if (!activeErrorModal?.resolution) return;
+    try {
+      const { summary, probableCauses, instructions } = activeErrorModal.resolution;
+      const text = [
+        `[Troubleshooting Guide] ${activeErrorModal.title}`,
+        '',
+        'What happened:',
+        summary,
+        '',
+        'Probable Causes:',
+        ...probableCauses.map(
+          (c) =>
+            `- [${c.confidence}] ${c.description}${
+              c.evidence?.length ? ` (Evidence: ${c.evidence.join('; ')})` : ''
+            }`
+        ),
+        '',
+        'Recommended Solution:',
+        ...instructions.map((i) => `${i.step}. ${i.title}: ${i.description}`),
+      ].join('\n');
+
+      await navigator.clipboard.writeText(text);
+      setCopiedInstructions(true);
+      setTimeout(() => setCopiedInstructions(false), 2000);
+    } catch (err) {
+      console.warn('Failed to copy instructions:', err);
     }
   };
 
@@ -149,6 +211,195 @@ export default function ErrorModal() {
               <div>{activeErrorModal.message}</div>
             )}
           </div>
+
+          {/* ─── B2. Troubleshooting & Resolution ─────────────── */}
+          {activeErrorModal.resolution && (
+            <div className={styles.troubleshootingSection}>
+              <div className={styles.sectionHeader}>
+                <h4 className={styles.sectionTitle}>
+                  <Wrench size={14} />
+                  <span>Troubleshooting & Resolution</span>
+                </h4>
+                <span
+                  className={`${styles.resolutionStatusBadge} ${getResolutionStatusClass(
+                    activeErrorModal.resolution.status
+                  )}`}
+                >
+                  {activeErrorModal.resolution.status.replace(/_/g, ' ')}
+                </span>
+              </div>
+
+              {/* What went wrong? */}
+              <div className={styles.troubleshootBlock}>
+                <h5 className={styles.troubleshootBlockTitle}>What went wrong?</h5>
+                <p className={styles.troubleshootText}>
+                  {activeErrorModal.resolution.summary}
+                </p>
+              </div>
+
+              {/* Probable Causes */}
+              {activeErrorModal.resolution.probableCauses.length > 0 && (
+                <div className={styles.troubleshootBlock}>
+                  <h5 className={styles.troubleshootBlockTitle}>Probable Causes</h5>
+                  <div className={styles.probableCausesList}>
+                    {activeErrorModal.resolution.probableCauses.map((cause, idx) => (
+                      <div key={idx} className={styles.probableCauseCard}>
+                        <div className={styles.probableCauseHeader}>
+                          <span style={{ fontWeight: 600 }}>{cause.description}</span>
+                          <span
+                            className={`${styles.confidenceBadge} ${
+                              cause.confidence === 'HIGH'
+                                ? styles.confHigh
+                                : cause.confidence === 'MEDIUM'
+                                ? styles.confMedium
+                                : styles.confLow
+                            }`}
+                          >
+                            {cause.confidence} CONFIDENCE
+                          </span>
+                        </div>
+                        {cause.evidence && cause.evidence.length > 0 && (
+                          <ul className={styles.evidenceList}>
+                            {cause.evidence.map((ev, i) => (
+                              <li key={i}>{ev}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Solution */}
+              {activeErrorModal.resolution.instructions.length > 0 && (
+                <div className={styles.troubleshootBlock}>
+                  <h5 className={styles.troubleshootBlockTitle}>Recommended Solution</h5>
+                  <div className={styles.instructionList}>
+                    {activeErrorModal.resolution.instructions.map((step) => (
+                      <div key={step.step} className={styles.instructionItem}>
+                        <div className={styles.stepCircle}>{step.step}</div>
+                        <div className={styles.instructionBody}>
+                          <div className={styles.instructionTitle}>{step.title}</div>
+                          <p className={styles.instructionDesc}>{step.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Contextual Action Buttons */}
+              {activeErrorModal.resolution.actions.length > 0 && (
+                <div className={styles.resolutionActionsBar}>
+                  {activeErrorModal.resolution.actions.map((act) => {
+                    if (act.type === 'DIAGNOSTIC') {
+                      return (
+                        <Button
+                          key={act.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => executeDiagnosticAction(act, activeErrorModal.id)}
+                          disabled={isDiagnosing || !act.enabled}
+                          title={act.description}
+                        >
+                          {isDiagnosing ? (
+                            <RefreshCw size={12} className="spin" />
+                          ) : (
+                            <Activity size={12} />
+                          )}
+                          <span>{act.label}</span>
+                        </Button>
+                      );
+                    }
+
+                    if (act.type === 'NAVIGATE') {
+                      return (
+                        <Button
+                          key={act.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (act.target) {
+                              router.push(act.target);
+                              closeErrorModal();
+                            }
+                          }}
+                          disabled={!act.enabled}
+                          title={act.description}
+                        >
+                          <Compass size={12} />
+                          <span>{act.label}</span>
+                        </Button>
+                      );
+                    }
+
+                    if (act.type === 'COPY') {
+                      return (
+                        <Button
+                          key={act.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyInstructions}
+                          disabled={!act.enabled}
+                          title={act.description}
+                        >
+                          {copiedInstructions ? (
+                            <Check size={12} style={{ color: 'var(--color-success)' }} />
+                          ) : (
+                            <Copy size={12} />
+                          )}
+                          <span>{copiedInstructions ? 'Copied' : act.label}</span>
+                        </Button>
+                      );
+                    }
+
+                    if (act.type === 'EXTERNAL_LINK') {
+                      return (
+                        <Button
+                          key={act.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (act.target) {
+                              window.open(act.target, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                          disabled={!act.enabled}
+                          title={act.description}
+                        >
+                          <ExternalLink size={12} />
+                          <span>{act.label}</span>
+                        </Button>
+                      );
+                    }
+
+                    if (act.type === 'RETRY') {
+                      return (
+                        <Button
+                          key={act.id}
+                          variant="primary"
+                          size="sm"
+                          onClick={handleRetry}
+                          disabled={isRetrying || !act.enabled || isResolved}
+                          title={act.description}
+                        >
+                          {isRetrying ? (
+                            <RefreshCw size={12} className="spin" />
+                          ) : (
+                            <RotateCcw size={12} />
+                          )}
+                          <span>{act.label}</span>
+                        </Button>
+                      );
+                    }
+
+                    return null;
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ─── C. Technical Error Details ───────────────────── */}
           <div className={styles.sectionBlock}>

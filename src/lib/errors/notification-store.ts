@@ -40,6 +40,8 @@ export class NotificationStore {
       executionStatus: data.executionStatus,
       retryAvailable: data.retryAvailable ?? false,
       relatedErrorId: data.relatedErrorId,
+      resolutionStatus: data.resolutionStatus,
+      primaryActionRoute: data.primaryActionRoute,
     };
 
     const updated = [newNotif, ...existing.filter((n) => n.id !== newNotif.id)].slice(

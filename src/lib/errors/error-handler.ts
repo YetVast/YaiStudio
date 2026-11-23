@@ -72,6 +72,7 @@ export class ErrorHandler {
     }
 
     // 4. Create notification
+    const primaryNavAction = appError.resolution?.actions?.find((a) => a.type === 'NAVIGATE' && a.enabled);
     await NotificationStore.addNotification({
       category: 'ERROR',
       title: appError.title,
@@ -81,6 +82,8 @@ export class ErrorHandler {
       operationId: appError.details.operationId || undefined,
       retryAvailable: appError.retry.available,
       relatedErrorId: appError.id,
+      resolutionStatus: appError.resolution?.status,
+      primaryActionRoute: primaryNavAction?.target || null,
     });
 
     // 5. Open Error Modal if appropriate

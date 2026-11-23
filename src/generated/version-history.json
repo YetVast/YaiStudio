@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-22T20:56:13.955Z",
-  "currentVersion": "v0.21",
+  "generatedAt": "2026-11-23T03:59:34.567Z",
+  "currentVersion": "v0.23",
   "currentMajor": 0,
-  "totalVersions": 21,
+  "totalVersions": 23,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -23,6 +23,267 @@
     }
   ],
   "versions": [
+    {
+      "version": "v0.23",
+      "major": 0,
+      "sequence": 23,
+      "commitHash": "c48b658bd706a465c24df7ae23373e1d09841085",
+      "shortCommitHash": "c48b658",
+      "subject": "Guided Troubleshooting, Error Resolution & Recovery Actions",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-23T08:27:13+05:30",
+      "committedAt": "2026-11-23T08:27:13+05:30",
+      "changeType": [
+        "ui"
+      ],
+      "changedFiles": [
+        "src/app/(app)/monitor/page.tsx",
+        "src/app/api/telemetry/save-github/route.ts",
+        "src/components/errors/ErrorModal.module.css",
+        "src/components/providers/ErrorNotificationProvider.tsx",
+        "src/lib/errors/error-normalizer.ts",
+        "src/lib/errors/error-resolution.ts",
+        "src/lib/errors/index.ts",
+        "src/lib/errors/types.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "src/app/(app)/monitor/page.tsx",
+          "insertions": 7,
+          "deletions": 1
+        },
+        {
+          "path": "src/app/api/telemetry/save-github/route.ts",
+          "insertions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/components/errors/ErrorModal.module.css",
+          "insertions": 186,
+          "deletions": 1
+        },
+        {
+          "path": "src/components/providers/ErrorNotificationProvider.tsx",
+          "insertions": 83,
+          "deletions": 1
+        },
+        {
+          "path": "src/lib/errors/error-normalizer.ts",
+          "insertions": 21,
+          "deletions": 3
+        },
+        {
+          "path": "src/lib/errors/error-resolution.ts",
+          "insertions": 528,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/index.ts",
+          "insertions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/types.ts",
+          "insertions": 69,
+          "deletions": 2
+        }
+      ],
+      "filesChanged": 8,
+      "insertions": 899,
+      "deletions": 9,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
+    {
+      "version": "v0.22",
+      "major": 0,
+      "sequence": 22,
+      "commitHash": "49ab2276bd85f703cc76b73b1511ac17e8fe50ee",
+      "shortCommitHash": "49ab227",
+      "subject": "Centralized Error Modal, Retry Mechanism & Notification Center",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-23T02:28:31+05:30",
+      "committedAt": "2026-11-23T02:28:31+05:30",
+      "changeType": [
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-23-centralized-error-modal-retry-notification-center.md",
+        "src/app/(app)/knowledge/page.tsx",
+        "src/app/(app)/memory/page.tsx",
+        "src/app/(app)/monitor/page.tsx",
+        "src/app/(app)/providers/page.tsx",
+        "src/app/(app)/workspaces/page.tsx",
+        "src/components/errors/ErrorModal.module.css",
+        "src/components/errors/ErrorModal.tsx",
+        "src/components/layout/AppShell.tsx",
+        "src/components/notifications/NotificationBellButton.module.css",
+        "src/components/notifications/NotificationBellButton.tsx",
+        "src/components/notifications/NotificationCenter.module.css",
+        "src/components/notifications/NotificationCenter.tsx",
+        "src/components/providers/ErrorNotificationProvider.tsx",
+        "src/generated/version-history.json",
+        "src/lib/errors/error-handler.ts",
+        "src/lib/errors/error-normalizer.ts",
+        "src/lib/errors/error-registry.ts",
+        "src/lib/errors/index.ts",
+        "src/lib/errors/notification-store.ts",
+        "src/lib/errors/retry-manager.ts",
+        "src/lib/errors/types.ts",
+        "tests/errors/error-handler.test.ts",
+        "tests/errors/error-normalizer.test.ts",
+        "tests/errors/error-registry-and-retry.test.ts",
+        "tests/errors/notification-store.test.ts",
+        "tests/telemetry/save-github.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-23-centralized-error-modal-retry-notification-center.md",
+          "insertions": 657,
+          "deletions": 0
+        },
+        {
+          "path": "src/app/(app)/knowledge/page.tsx",
+          "insertions": 34,
+          "deletions": 4
+        },
+        {
+          "path": "src/app/(app)/memory/page.tsx",
+          "insertions": 70,
+          "deletions": 8
+        },
+        {
+          "path": "src/app/(app)/monitor/page.tsx",
+          "insertions": 90,
+          "deletions": 5
+        },
+        {
+          "path": "src/app/(app)/providers/page.tsx",
+          "insertions": 32,
+          "deletions": 4
+        },
+        {
+          "path": "src/app/(app)/workspaces/page.tsx",
+          "insertions": 32,
+          "deletions": 4
+        },
+        {
+          "path": "src/components/errors/ErrorModal.module.css",
+          "insertions": 367,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/errors/ErrorModal.tsx",
+          "insertions": 360,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "insertions": 6,
+          "deletions": 1
+        },
+        {
+          "path": "src/components/notifications/NotificationBellButton.module.css",
+          "insertions": 69,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/notifications/NotificationBellButton.tsx",
+          "insertions": 32,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/notifications/NotificationCenter.module.css",
+          "insertions": 279,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/notifications/NotificationCenter.tsx",
+          "insertions": 284,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/providers/ErrorNotificationProvider.tsx",
+          "insertions": 232,
+          "deletions": 0
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 65,
+          "deletions": 3
+        },
+        {
+          "path": "src/lib/errors/error-handler.ts",
+          "insertions": 147,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/error-normalizer.ts",
+          "insertions": 244,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/error-registry.ts",
+          "insertions": 167,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/index.ts",
+          "insertions": 6,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/notification-store.ts",
+          "insertions": 204,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/retry-manager.ts",
+          "insertions": 202,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/types.ts",
+          "insertions": 117,
+          "deletions": 0
+        },
+        {
+          "path": "tests/errors/error-handler.test.ts",
+          "insertions": 111,
+          "deletions": 0
+        },
+        {
+          "path": "tests/errors/error-normalizer.test.ts",
+          "insertions": 111,
+          "deletions": 0
+        },
+        {
+          "path": "tests/errors/error-registry-and-retry.test.ts",
+          "insertions": 204,
+          "deletions": 0
+        },
+        {
+          "path": "tests/errors/notification-store.test.ts",
+          "insertions": 130,
+          "deletions": 0
+        },
+        {
+          "path": "tests/telemetry/save-github.test.ts",
+          "insertions": 4,
+          "deletions": 5
+        }
+      ],
+      "filesChanged": 27,
+      "insertions": 4256,
+      "deletions": 34,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
     {
       "version": "v0.21",
       "major": 0,

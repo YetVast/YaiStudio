@@ -142,7 +142,7 @@ export interface AppNotification {
   timestamp: string;
   read: boolean;
   executionStatus?: string;
-  retryAvailable: boolean;
+  retryAvailable?: boolean;
   relatedErrorId?: string;
   resolutionStatus?: ResolutionStatus;
   primaryActionRoute?: string | null;
