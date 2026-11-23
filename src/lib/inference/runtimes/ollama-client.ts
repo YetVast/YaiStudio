@@ -15,6 +15,7 @@
  */
 
 import { processTelemetry } from '@/lib/telemetry/process-telemetry';
+import { LocalAIConfig } from '../local-ai-config';
 
 export type OllamaConnectionState =
   | 'NOT_CONFIGURED'
@@ -122,8 +123,14 @@ export class OllamaClient {
 
         if (res.ok) {
           const data = await res.json();
+          const isOllamaActive =
+            (typeof window !== 'undefined' && LocalAIConfig.getRuntime() === 'ollama') ||
+            (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test');
+
           if (data.available === false) {
-            processTelemetry.setRuntimeHealth('offline');
+            if (isOllamaActive) {
+              processTelemetry.setRuntimeHealth('offline');
+            }
             processTelemetry.failProcess(proc.id, data.error || 'Ollama offline');
             return {
               state: 'DISCONNECTED',
@@ -137,8 +144,10 @@ export class OllamaClient {
 
           const version = data.version || '0.34+';
 
-          processTelemetry.setCurrentRuntime('ollama');
-          processTelemetry.setRuntimeHealth('healthy');
+          if (isOllamaActive) {
+            processTelemetry.setCurrentRuntime('ollama');
+            processTelemetry.setRuntimeHealth('healthy');
+          }
           processTelemetry.completeProcess(proc.id, undefined, `Connected to Ollama v${version}`);
 
           return {
@@ -155,13 +164,19 @@ export class OllamaClient {
       } catch (directErr: any) {
         clearTimeout(timeoutId);
 
+        const isOllamaActive =
+          (typeof window !== 'undefined' && LocalAIConfig.getRuntime() === 'ollama') ||
+          (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test');
+
         // 2. Smart Diagnosis: Is Ollama running but blocked by CORS / OLLAMA_ORIGINS?
         const isOffline = await this.probePortReachable(endpoint);
 
         if (isOffline) {
           const errMsg = `Ollama service is not reachable at ${endpoint}.`;
           const troubleshooting = `Please verify Ollama is installed and running. Start it in terminal using: ollama serve`;
-          processTelemetry.setRuntimeHealth('offline');
+          if (isOllamaActive) {
+            processTelemetry.setRuntimeHealth('offline');
+          }
           processTelemetry.failProcess(proc.id, errMsg);
 
           return {
@@ -183,7 +198,9 @@ export class OllamaClient {
             `• Linux: Add Environment="OLLAMA_ORIGINS=*" to systemd service.\n` +
             `• Or run the local companion: node scripts/yai-local-agent.mjs`;
 
-          processTelemetry.setRuntimeHealth('degraded');
+          if (isOllamaActive) {
+            processTelemetry.setRuntimeHealth('degraded');
+          }
           processTelemetry.failProcess(proc.id, 'CORS origin blocked by Ollama daemon');
 
           return {
@@ -237,7 +254,10 @@ export class OllamaClient {
   static async listModels(): Promise<OllamaModelItem[]> {
     const endpoint = this.getEndpoint();
     try {
-      const res = await fetch(`${endpoint}/api/tags`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${endpoint}/api/tags`, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!res.ok) return [];
       const data = await res.json();
       return data.models || [];
@@ -250,7 +270,10 @@ export class OllamaClient {
   static async listRunningModels(): Promise<OllamaRunningModel[]> {
     const endpoint = this.getEndpoint();
     try {
-      const res = await fetch(`${endpoint}/api/ps`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${endpoint}/api/ps`, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!res.ok) return [];
       const data = await res.json();
       return data.models || [];

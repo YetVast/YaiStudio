@@ -107,8 +107,10 @@ export default function ProvidersPage() {
       setLocalRecords(records);
       setActiveLocalModelId(LocalAIConfig.getActiveModelId());
 
-      // Probe Ollama in background
-      handlePingOllama();
+      // Only probe Ollama on initial load if Ollama is the active runtime
+      if (LocalAIConfig.getRuntime() === 'ollama') {
+        handlePingOllama();
+      }
     } catch (err: any) {
       const msg = 'Failed to load provider configuration';
       setErrorMessage(msg);

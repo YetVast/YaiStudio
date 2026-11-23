@@ -1,10 +1,10 @@
 {
   "applicationName": "YAI Studio",
   "repository": "YetVastSolutions/YaiStudio",
-  "generatedAt": "2026-11-23T03:59:34.567Z",
-  "currentVersion": "v0.23",
+  "generatedAt": "2026-11-23T04:40:14.016Z",
+  "currentVersion": "v0.24",
   "currentMajor": 0,
-  "totalVersions": 23,
+  "totalVersions": 24,
   "baseline": {
     "version": "v0.1",
     "commitHash": "d4cabebcfd960b6547dd5217669c60d508982c28",
@@ -23,6 +23,98 @@
     }
   ],
   "versions": [
+    {
+      "version": "v0.24",
+      "major": 0,
+      "sequence": 24,
+      "commitHash": "8ef01ca2930db9927f728f9146c5d0b114a2eb30",
+      "shortCommitHash": "8ef01ca",
+      "subject": "Guided Troubleshooting, Error Resolution & Recovery Actions",
+      "description": "No extended description was recorded for this commit.",
+      "hasExtendedDescription": false,
+      "authorName": "Yagnavalk Chaapala",
+      "authoredAt": "2026-11-23T09:42:42+05:30",
+      "committedAt": "2026-11-23T09:42:42+05:30",
+      "changeType": [
+        "ui",
+        "test"
+      ],
+      "changedFiles": [
+        "docs/implementation/2026-11-23-guided-troubleshooting-error-resolution.md",
+        "src/components/errors/ErrorModal.tsx",
+        "src/components/notifications/NotificationCenter.module.css",
+        "src/components/notifications/NotificationCenter.tsx",
+        "src/generated/version-history.json",
+        "src/lib/errors/error-handler.ts",
+        "src/lib/errors/error-resolution.ts",
+        "src/lib/errors/notification-store.ts",
+        "src/lib/errors/types.ts",
+        "tests/errors/error-handler.test.ts",
+        "tests/errors/error-resolution.test.ts"
+      ],
+      "fileStats": [
+        {
+          "path": "docs/implementation/2026-11-23-guided-troubleshooting-error-resolution.md",
+          "insertions": 968,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/errors/ErrorModal.tsx",
+          "insertions": 252,
+          "deletions": 1
+        },
+        {
+          "path": "src/components/notifications/NotificationCenter.module.css",
+          "insertions": 18,
+          "deletions": 0
+        },
+        {
+          "path": "src/components/notifications/NotificationCenter.tsx",
+          "insertions": 31,
+          "deletions": 1
+        },
+        {
+          "path": "src/generated/version-history.json",
+          "insertions": 264,
+          "deletions": 3
+        },
+        {
+          "path": "src/lib/errors/error-handler.ts",
+          "insertions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/error-resolution.ts",
+          "insertions": 19,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/notification-store.ts",
+          "insertions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/lib/errors/types.ts",
+          "insertions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "tests/errors/error-handler.test.ts",
+          "insertions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "tests/errors/error-resolution.test.ts",
+          "insertions": 213,
+          "deletions": 0
+        }
+      ],
+      "filesChanged": 11,
+      "insertions": 1772,
+      "deletions": 7,
+      "isBaseline": false,
+      "isMajorVersionStart": false
+    },
     {
       "version": "v0.23",
       "major": 0,

@@ -32,6 +32,11 @@ import { detectDeviceCapabilities } from '@/lib/inference/device-capabilities';
 import { OllamaClient } from '@/lib/inference/runtimes/ollama-client';
 import { LocalAIConfig } from '@/lib/inference/local-ai-config';
 import {
+  RuntimeHealthService,
+  type RuntimeHealthReport,
+  type RuntimeHealthStatus,
+} from '@/lib/inference/runtime-health';
+import {
   TestOnceRunner,
   DEFAULT_TEST_QUERY,
   TestHistoryStorage,
@@ -42,6 +47,27 @@ import { errorHandler } from '@/lib/errors';
 import type { DeviceCapabilityReport } from '@/lib/inference/types';
 import type { RuntimeProcess } from '@/lib/telemetry/types';
 import styles from './Monitor.module.css';
+
+function getHealthColor(status?: RuntimeHealthStatus | string) {
+  switch (status) {
+    case 'READY':
+    case 'healthy':
+      return 'var(--color-success)';
+    case 'CHECKING':
+    case 'checking':
+      return 'var(--color-muted-foreground)';
+    case 'MODEL_NOT_LOADED':
+    case 'MODEL_NOT_FOUND':
+    case 'degraded':
+      return 'var(--color-warning)';
+    case 'UNAVAILABLE':
+    case 'INITIALIZATION_FAILED':
+    case 'ERROR':
+    case 'offline':
+    default:
+      return 'var(--color-destructive)';
+  }
+}
 
 export default function RuntimeMonitorPage() {
   const {
@@ -59,6 +85,9 @@ export default function RuntimeMonitorPage() {
   const [caps, setCaps] = useState<DeviceCapabilityReport | null>(null);
   const [expandedProcessId, setExpandedProcessId] = useState<string | null>(null);
   const [runningOllamaModels, setRunningOllamaModels] = useState<any[]>([]);
+  const [healthReport, setHealthReport] = useState<RuntimeHealthReport | null>(() =>
+    RuntimeHealthService.getLastReport()
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   // Section Expand / Collapse State
@@ -103,13 +132,18 @@ export default function RuntimeMonitorPage() {
   const loadData = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [detectedCaps, runningModels, modelInfo, history] = await Promise.all([
+      const currentProv = RuntimeHealthService.resolveCurrentProvider();
+      const [detectedCaps, currentHealth, runningModels, modelInfo, history] = await Promise.all([
         detectDeviceCapabilities().catch(() => null),
-        OllamaClient.listRunningModels().catch(() => []),
+        RuntimeHealthService.checkCurrentRuntimeHealth().catch(() => null),
+        currentProv.providerType === 'OLLAMA'
+          ? OllamaClient.listRunningModels().catch(() => [])
+          : Promise.resolve([]),
         TestOnceRunner.getCurrentlySelectedModelInfo().catch(() => null),
         TestHistoryStorage.getTestResults().catch(() => []),
       ]);
       setCaps(detectedCaps);
+      if (currentHealth) setHealthReport(currentHealth);
       setRunningOllamaModels(runningModels);
       setSelectedModelInfo(modelInfo);
       setTestHistory(history);
@@ -124,8 +158,29 @@ export default function RuntimeMonitorPage() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 5000);
-    return () => clearInterval(interval);
+
+    // Subscribe to real-time provider health updates
+    const unsubHealth = RuntimeHealthService.subscribe((report) => {
+      setHealthReport(report);
+    });
+
+    // Subscribe to preference/provider/model changes
+    const unsubConfig = LocalAIConfig.subscribe(() => {
+      loadData();
+    });
+
+    // 10s polling interval with window visibility awareness to prevent background thrashing
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      loadData();
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      unsubHealth();
+      unsubConfig();
+      RuntimeHealthService.cancelPendingChecks();
+    };
   }, [loadData]);
 
   const toggleProcessExpand = (id: string) => {
@@ -402,7 +457,15 @@ export default function RuntimeMonitorPage() {
                 <Cpu size={16} style={{ color: 'var(--color-muted-foreground)' }} />
               </div>
               <div className={styles.metricValue}>
-                {metrics.currentRuntime === 'litert-lm'
+                {healthReport?.providerType === 'LOCAL-LITERT'
+                  ? caps?.hasWebGPU
+                    ? 'LiteRT-LM (WebGPU)'
+                    : 'LiteRT-LM (WASM SIMD)'
+                  : healthReport?.providerType === 'OLLAMA'
+                  ? 'Ollama Local Daemon'
+                  : healthReport?.providerType === 'CLOUD'
+                  ? `Cloud (${healthReport.modelName || 'BYOK'})`
+                  : metrics.currentRuntime === 'litert-lm'
                   ? 'LiteRT-LM (WebGPU)'
                   : metrics.currentRuntime === 'ollama'
                   ? 'Ollama Local Daemon'
@@ -414,16 +477,24 @@ export default function RuntimeMonitorPage() {
                 Health:{' '}
                 <strong
                   style={{
-                    color:
-                      metrics.runtimeHealth === 'healthy'
-                        ? 'var(--color-success)'
-                        : metrics.runtimeHealth === 'offline'
-                        ? 'var(--color-destructive)'
-                        : 'var(--color-warning)',
+                    color: getHealthColor(healthReport?.status || metrics.runtimeHealth),
                   }}
                 >
-                  {metrics.runtimeHealth.toUpperCase()}
+                  {healthReport?.status || metrics.runtimeHealth.toUpperCase()}
                 </strong>
+                {healthReport?.message && (
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: '0.75rem',
+                      color: 'var(--color-muted-foreground)',
+                      marginTop: '3px',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    {healthReport.message}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -433,10 +504,18 @@ export default function RuntimeMonitorPage() {
                 <Layers size={16} style={{ color: 'var(--color-muted-foreground)' }} />
               </div>
               <div className={styles.metricValue} style={{ fontSize: '1rem', wordBreak: 'break-all' }}>
-                {activeModelId || 'No active model'}
+                {healthReport?.modelName || healthReport?.modelId || activeModelId || 'No active model'}
               </div>
               <div className={styles.metricSubtext}>
-                {metrics.isLoadingModel ? 'Loading model weights into memory...' : 'Ready for prompt evaluation'}
+                {healthReport?.status === 'READY'
+                  ? 'Ready for prompt evaluation'
+                  : healthReport?.status === 'MODEL_NOT_LOADED'
+                  ? 'Model not downloaded in OPFS'
+                  : healthReport?.status === 'MODEL_NOT_FOUND'
+                  ? 'Model not found in catalog / local store'
+                  : metrics.isLoadingModel
+                  ? 'Loading model weights into memory...'
+                  : 'Ready for prompt evaluation'}
               </div>
             </div>
 
@@ -557,20 +636,42 @@ export default function RuntimeMonitorPage() {
                   <span className={styles.memoryBoxTitle}>Model & Runtime VRAM</span>
                   <span
                     className={`${styles.dataPill} ${
-                      runningOllamaModels.length > 0 ? styles.dataPillMeasured : styles.dataPillEstimated
+                      healthReport?.providerType === 'LOCAL-LITERT'
+                        ? styles.dataPillEstimated
+                        : runningOllamaModels.length > 0
+                        ? styles.dataPillMeasured
+                        : styles.dataPillEstimated
                     }`}
                   >
-                    {runningOllamaModels.length > 0 ? 'Measured' : 'Estimated'}
+                    {healthReport?.providerType === 'LOCAL-LITERT'
+                      ? 'WebGPU / OPFS'
+                      : runningOllamaModels.length > 0
+                      ? 'Measured'
+                      : 'Estimated'}
                   </span>
                 </div>
                 <div className={styles.memoryRow}>
                   <span className={styles.memoryRowLabel}>Active Model:</span>
-                  <span className={styles.memoryRowValue}>{metrics.activeModel || 'None in VRAM'}</span>
+                  <span className={styles.memoryRowValue}>
+                    {healthReport?.modelName || metrics.activeModel || 'None in VRAM'}
+                  </span>
                 </div>
                 <div className={styles.memoryRow}>
-                  <span className={styles.memoryRowLabel}>Ollama VRAM Consumed:</span>
+                  <span className={styles.memoryRowLabel}>
+                    {healthReport?.providerType === 'LOCAL-LITERT'
+                      ? 'LiteRT-LM Storage (OPFS):'
+                      : healthReport?.providerType === 'CLOUD'
+                      ? 'Local VRAM Consumed:'
+                      : 'Ollama VRAM Consumed:'}
+                  </span>
                   <span className={styles.memoryRowValue}>
-                    {runningOllamaModels.length > 0 && runningOllamaModels[0].size_vram
+                    {healthReport?.providerType === 'LOCAL-LITERT'
+                      ? healthReport.details?.modelStorageBytes
+                        ? `${(healthReport.details.modelStorageBytes / (1024 * 1024)).toFixed(0)} MB in OPFS`
+                        : 'Not downloaded'
+                      : healthReport?.providerType === 'CLOUD'
+                      ? '0 MB (Cloud Hosted)'
+                      : runningOllamaModels.length > 0 && runningOllamaModels[0].size_vram
                       ? `${(runningOllamaModels[0].size_vram / (1024 * 1024)).toFixed(0)} MB`
                       : '0 MB / Standby'}
                   </span>
