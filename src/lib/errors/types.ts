@@ -1,8 +1,8 @@
 /**
  * YAI Studio — Centralized Error Management and Notification System Types
  *
- * Provides standardized contracts for error categorization, diagnostic logging,
- * retry management, and notification lifecycle.
+ * Standardized contracts for error categorization, diagnostic logging,
+ * structured troubleshooting & resolution, retry management, and notification lifecycle.
  */
 
 export type ErrorCategory =
@@ -30,6 +30,61 @@ export interface DiagnosticLog {
   message: string;
 }
 
+// ─── Troubleshooting & Resolution Types ─────────────────────────
+
+export type ResolutionStatus =
+  | 'ACTION_REQUIRED'
+  | 'AUTOMATIC_FIX_AVAILABLE'
+  | 'MANUAL_FIX_REQUIRED'
+  | 'WAITING_FOR_USER'
+  | 'READY_TO_RETRY'
+  | 'RESOLVED'
+  | 'UNRESOLVED';
+
+export interface ProbableCause {
+  description: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  evidence: string[];
+}
+
+export interface ResolutionStep {
+  step: number;
+  title: string;
+  description: string;
+  completed?: boolean;
+}
+
+export type ResolutionActionType =
+  | 'RETRY'
+  | 'NAVIGATE'
+  | 'EXTERNAL_LINK'
+  | 'DIAGNOSTIC'
+  | 'AUTOMATIC_FIX'
+  | 'COPY';
+
+export interface ResolutionAction {
+  id: string;
+  label: string;
+  type: ResolutionActionType;
+  enabled: boolean;
+  target: string | null;
+  description: string;
+  requiresConfirmation?: boolean;
+}
+
+export interface ErrorResolution {
+  summary: string;
+  probableCauses: ProbableCause[];
+  instructions: ResolutionStep[];
+  status: ResolutionStatus;
+  actions: ResolutionAction[];
+  fixAvailable: boolean;
+  automaticFixAvailable: boolean;
+  resolutionEvidence: string[];
+}
+
+// ─── Application Error Data Structure ───────────────────────────
+
 export interface ApplicationError {
   id: string;
   title: string;
@@ -43,6 +98,8 @@ export interface ApplicationError {
   details: {
     errorCode: string | null;
     httpStatus: number | null;
+    upstreamStatus?: number | null;
+    upstreamService?: string | null;
     endpoint: string | null;
     requestId: string | null;
     operationId: string | null;
@@ -61,9 +118,12 @@ export interface ApplicationError {
     status: RetryStatus;
     reasonUnavailable?: string | null;
   };
+  resolution?: ErrorResolution;
   occurredAt: string;
   resolvedAt?: string | null;
 }
+
+// ─── Notification Data Structure ────────────────────────────────
 
 export type NotificationCategory = 'ERROR' | 'WARNING' | 'SUCCESS' | 'INFO';
 
@@ -84,7 +144,11 @@ export interface AppNotification {
   executionStatus?: string;
   retryAvailable: boolean;
   relatedErrorId?: string;
+  resolutionStatus?: ResolutionStatus;
+  primaryActionRoute?: string | null;
 }
+
+// ─── Capture Options ────────────────────────────────────────────
 
 export type RetryHandler = () => Promise<boolean | void>;
 
@@ -101,6 +165,8 @@ export interface CaptureErrorOptions {
   details?: {
     errorCode?: string | null;
     httpStatus?: number | null;
+    upstreamStatus?: number | null;
+    upstreamService?: string | null;
     endpoint?: string | null;
     requestId?: string | null;
     operationId?: string | null;
@@ -112,6 +178,7 @@ export interface CaptureErrorOptions {
   retryHandler?: RetryHandler;
   maxRetries?: number;
   reasonUnavailable?: string;
+  customResolution?: Partial<ErrorResolution>;
   showModal?: boolean;
   silent?: boolean;
 }

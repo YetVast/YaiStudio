@@ -269,6 +269,8 @@ export default function RuntimeMonitorPage() {
         const errorMsg = data.error || `Failed to save telemetry (${res.status})`;
         const httpError = new Error(errorMsg);
         (httpError as any).status = res.status;
+        (httpError as any).upstreamStatus = data.upstreamStatus || res.status;
+        (httpError as any).upstreamService = data.upstreamService || 'GitHub API';
         throw httpError;
       }
 
@@ -281,6 +283,8 @@ export default function RuntimeMonitorPage() {
       return true;
     } catch (err: any) {
       const status = (err && (err.status || httpStatus)) || null;
+      const upstreamStatus = err?.upstreamStatus ?? (status === 401 ? 401 : null);
+      const upstreamService = err?.upstreamService ?? 'GitHub API';
       const errorMsg = err instanceof Error ? err.message : String(err);
       setGithubSaveError(errorMsg);
 
@@ -289,7 +293,7 @@ export default function RuntimeMonitorPage() {
         error: err,
         title: 'GitHub Baseline Persistence Failed',
         message: errorMsg,
-        category: status === 401 ? 'AUTHENTICATION' : status === 403 ? 'AUTHORIZATION' : 'API',
+        category: upstreamStatus === 401 || status === 401 ? 'AUTHENTICATION' : upstreamStatus === 403 || status === 403 ? 'AUTHORIZATION' : 'API',
         source: {
           module: 'AI Runtime Monitor',
           component: 'GitHub Persistence',
@@ -297,6 +301,8 @@ export default function RuntimeMonitorPage() {
         },
         details: {
           httpStatus: status,
+          upstreamStatus,
+          upstreamService,
           endpoint: '/api/telemetry/save-github',
           provider: activeDisplayResult.model.provider,
           model: activeDisplayResult.model.name,

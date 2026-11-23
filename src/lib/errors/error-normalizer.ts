@@ -6,6 +6,7 @@
  */
 
 import type { ApplicationError, ErrorCategory, CaptureErrorOptions } from './types';
+import { generateErrorResolution } from './error-resolution';
 
 // Sensitive patterns to scrub from errors, messages, and stack traces
 const SENSITIVE_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
@@ -177,6 +178,8 @@ export function normalizeError(options: CaptureErrorOptions, generatedId?: strin
   let originalMessage = '';
   let stackTrace: string | null = null;
   let detectedStatus = details?.httpStatus ?? null;
+  let detectedUpstreamStatus = details?.upstreamStatus ?? null;
+  let detectedUpstreamService = details?.upstreamService ?? null;
   let detectedCode = details?.errorCode ?? null;
 
   if (error instanceof Error) {
@@ -184,6 +187,12 @@ export function normalizeError(options: CaptureErrorOptions, generatedId?: strin
     stackTrace = error.stack || null;
     if ('status' in error && typeof (error as any).status === 'number') {
       detectedStatus = (error as any).status;
+    }
+    if ('upstreamStatus' in error && typeof (error as any).upstreamStatus === 'number') {
+      detectedUpstreamStatus = (error as any).upstreamStatus;
+    }
+    if ('upstreamService' in error && typeof (error as any).upstreamService === 'string') {
+      detectedUpstreamService = (error as any).upstreamService;
     }
     if ('code' in error && typeof (error as any).code === 'string') {
       detectedCode = (error as any).code;
@@ -196,13 +205,15 @@ export function normalizeError(options: CaptureErrorOptions, generatedId?: strin
     originalMessage = String(error);
   }
 
-  const finalCategory = classifyErrorCategory(error, category, detectedStatus);
-  const friendly = getFriendlySummary(finalCategory, detectedStatus, originalMessage);
+  // If upstream is 401 Bad credentials, prioritize authenticating category over a 500 wrapper
+  const effectiveStatus = detectedUpstreamStatus || detectedStatus;
+  const finalCategory = classifyErrorCategory(error, category, effectiveStatus);
+  const friendly = getFriendlySummary(finalCategory, effectiveStatus, originalMessage);
 
   const errorId = generatedId || `err_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   const hasRetry = Boolean(retryHandler);
 
-  return {
+  const appError: ApplicationError = {
     id: errorId,
     title: sanitizeString(title || friendly.title),
     message: sanitizeString(message || friendly.message),
@@ -215,6 +226,8 @@ export function normalizeError(options: CaptureErrorOptions, generatedId?: strin
     details: {
       errorCode: detectedCode ? sanitizeString(detectedCode) : null,
       httpStatus: detectedStatus,
+      upstreamStatus: detectedUpstreamStatus,
+      upstreamService: detectedUpstreamService ? sanitizeString(detectedUpstreamService) : null,
       endpoint: details?.endpoint ? sanitizeString(details.endpoint) : null,
       requestId: details?.requestId ? sanitizeString(details.requestId) : null,
       operationId: details?.operationId ? sanitizeString(details.operationId) : null,
@@ -241,4 +254,9 @@ export function normalizeError(options: CaptureErrorOptions, generatedId?: strin
     occurredAt: new Date().toISOString(),
     resolvedAt: null,
   };
+
+  // Generate actionable troubleshooting & resolution guidance
+  appError.resolution = generateErrorResolution(appError, options.customResolution);
+
+  return appError;
 }

@@ -158,11 +158,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('[Telemetry GitHub Save] Error:', error);
+    const upstreamStatus = typeof error?.status === 'number' ? error.status : 500;
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Failed to save telemetry record to GitHub',
+        upstreamStatus,
+        upstreamService: 'GitHub API',
       },
-      { status: 500 }
+      { status: upstreamStatus }
     );
   }
 }

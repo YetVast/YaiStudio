@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   NotificationStore,
   ErrorRegistry,
@@ -8,6 +9,7 @@ import {
   errorHandler,
   type AppNotification,
   type ApplicationError,
+  type ResolutionAction,
 } from '@/lib/errors';
 import ErrorModal from '@/components/errors/ErrorModal';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -28,16 +30,20 @@ interface ErrorNotificationContextValue {
   clearAllNotifications: () => Promise<void>;
   retryError: (errorId: string) => Promise<boolean>;
   isRetrying: boolean;
+  executeDiagnosticAction: (action: ResolutionAction, errorId: string) => Promise<void>;
+  isDiagnosing: boolean;
 }
 
 const ErrorNotificationContext = createContext<ErrorNotificationContextValue | null>(null);
 
 export function ErrorNotificationProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
   const [activeErrorModal, setActiveErrorModal] = useState<ApplicationError | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
 
   // Sync notifications from NotificationStore
   const refreshNotifications = useCallback(async () => {
@@ -92,7 +98,7 @@ export function ErrorNotificationProvider({ children }: { children: React.ReactN
           operation: 'Async Operation',
         },
         category: 'RUNTIME',
-        showModal: false, // Notification-only so it doesn't jarringly block the user
+        showModal: false,
       });
     };
 
@@ -166,6 +172,7 @@ export function ErrorNotificationProvider({ children }: { children: React.ReactN
           title: `[Resolved] ${n.title}`,
           executionStatus: 'SUCCEEDED',
           retryAvailable: false,
+          resolutionStatus: 'RESOLVED',
         }));
       }
       return success;
@@ -176,6 +183,77 @@ export function ErrorNotificationProvider({ children }: { children: React.ReactN
       if (fresh) setActiveErrorModal(fresh);
     }
   }, []);
+
+  // Execute non-destructive diagnostic check
+  const executeDiagnosticAction = useCallback(async (action: ResolutionAction, errorId: string) => {
+    if (isDiagnosing) return;
+    setIsDiagnosing(true);
+
+    try {
+      const now = new Date().toISOString();
+      if (action.target === '/api/github/connection') {
+        const res = await fetch('/api/github/connection');
+        const data = await res.json();
+
+        let diagnosticMessage = '';
+        let isReadyToRetry = false;
+
+        if (res.ok && data.connected && data.repoExists && data.repoPrivate && data.repoOwnerMatch) {
+          diagnosticMessage = `[Diagnostic] GitHub Connection Verified: Account @${data.githubLogin} is connected. Repository ${data.repoName} is verified private and owner matches. Ready to retry!`;
+          isReadyToRetry = true;
+        } else if (data.connected && !data.repoExists) {
+          diagnosticMessage = `[Diagnostic] GitHub Connected: Token is valid for @${data.githubLogin}, but data repository '${data.repoName}' does not exist yet. Please initialize repository.`;
+        } else {
+          diagnosticMessage = `[Diagnostic] GitHub Authentication Check: Storage grant is disconnected or invalid (${data.error || 'Token not found'}). Please re-authorize via GitHub Connect.`;
+        }
+
+        await ErrorRegistry.updateError(errorId, (err) => ({
+          ...err,
+          logs: [
+            ...err.logs,
+            {
+              timestamp: now,
+              level: isReadyToRetry ? 'info' : 'warn',
+              source: 'Diagnostic Check',
+              message: diagnosticMessage,
+            },
+          ],
+          resolution: err.resolution
+            ? {
+                ...err.resolution,
+                status: isReadyToRetry ? 'READY_TO_RETRY' : err.resolution.status,
+                resolutionEvidence: [
+                  ...err.resolution.resolutionEvidence,
+                  `Diagnostic Result: ${diagnosticMessage}`,
+                ],
+              }
+            : undefined,
+        }));
+      } else {
+        // Generic diagnostic log
+        await ErrorRegistry.updateError(errorId, (err) => ({
+          ...err,
+          logs: [
+            ...err.logs,
+            {
+              timestamp: now,
+              level: 'info',
+              source: 'Diagnostic Check',
+              message: `Executed diagnostic check: ${action.label}`,
+            },
+          ],
+        }));
+      }
+
+      // Refresh modal
+      const fresh = await ErrorRegistry.getError(errorId);
+      if (fresh) setActiveErrorModal(fresh);
+    } catch (diagErr: any) {
+      console.warn('[ErrorNotificationProvider] Diagnostic failed:', diagErr);
+    } finally {
+      setIsDiagnosing(false);
+    }
+  }, [isDiagnosing]);
 
   const value = useMemo(
     () => ({
@@ -194,6 +272,8 @@ export function ErrorNotificationProvider({ children }: { children: React.ReactN
       clearAllNotifications,
       retryError,
       isRetrying,
+      executeDiagnosticAction,
+      isDiagnosing,
     }),
     [
       notifications,
@@ -211,6 +291,8 @@ export function ErrorNotificationProvider({ children }: { children: React.ReactN
       clearAllNotifications,
       retryError,
       isRetrying,
+      executeDiagnosticAction,
+      isDiagnosing,
     ]
   );
 
